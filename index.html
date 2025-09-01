@@ -1,75 +1,105 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Compton Property Studio — Plymouth Floor Plans (24–48h)</title>
-  <meta name="description" content="Fast, accurate property floor plans in Plymouth. 24–48h turnaround with optional next‑day. Standard plan £100; HMO room‑size check +£40 (advisory).">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: sans-serif; margin:0; padding:0; background:#0b1220; color:#e5e7eb; }
-    .container { max-width: 960px; margin:auto; padding:20px; }
-    header { padding:20px 0; border-bottom: 1px solid #1f2937; }
-    h1 { font-size:2rem; margin-bottom:0.5rem; }
-    .kpis { display:flex; flex-wrap:wrap; gap:10px; margin-top:1rem; }
-    .pill { background:#111827; padding:8px 12px; border-radius:999px; color:#cbd5e1; font-size:0.9rem; }
-    section { padding:40px 0; }
-    .grid { display:flex; flex-wrap:wrap; gap:20px; }
-    .card { background:#111827; padding:20px; border-radius:12px; flex:1; min-width:250px; }
-    footer { padding:20px 0; border-top:1px solid #1f2937; font-size:0.8rem; color:#a1a1aa; }
-    a { color:#38bdf8; text-decoration:none; }
-    a.button { display:inline-block; padding:10px 20px; border-radius:999px; margin-top:1rem; }
-    .button-primary { background:#22c55e; color:#052e17; }
-    .button-secondary { border:1px solid #334155; color:#e2e8f0; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compton Property Studio — Plymouth Floor Plans (24–48h)</title>
+<meta name="description" content="Fast, accurate floor plans in Plymouth. 24–48h delivery with optional next-day. Agent-ready PDFs and images. HMO room-size check (advisory).">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+"@context": "https://schema.org",
+"@type": "LocalBusiness",
+"name": "Compton Property Studio",
+"description": "Property floor plans in Plymouth with 24–48h turnaround and optional next-day.",
+"areaServed": "Plymouth, UK",
+"priceRange": "Â£Â£",
+"url": "https://www.comptonpropertystudio.co.uk",
+"telephone": "+44 7000 000000",
+"email": "hello@comptonpropertystudio.co.uk"
+}
+</script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Compton Property Studio</h1>
-      <p>Plymouth floor plans within 24–48 hours. Next‑day option available.</p>
-    </header>
-    <section>
-      <h2>What you get</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Agent‑ready files</h3>
-          <p>Clean plans with room labels, key dimensions, north arrow, scale bar. Delivered as A4/A3 PDF + image files.</p>
-        </div>
-        <div class="card">
-          <h3>Reliable turnarounds</h3>
-          <p>Standard delivery 24–48h, optional next‑day slot +£40.</p>
-        </div>
-        <div class="card">
-          <h3>HMO room‑size check</h3>
-          <p>Advisory bedroom schedule +£40. Not a licensing decision.</p>
-        </div>
-      </div>
-    </section>
-    <section>
-      <h2>Pricing</h2>
-      <p><strong>Standard plan:</stro£100 £100 (up to 120 m²)</p>
-<p><strong>Next‑day delivery:</strong> +£40</p>
-<p><strong>HMO room‑size check:</strong> +£40</p>
-<p>Extras: +£25 per 50 m², +£15 per outbuilding, PL postcodes included; outside PL +£0.50/mile.</p>
-    <section>
-      <h2>How it works</h2>
-      <ol>
-        <li>Send the address and access window.</li>
-        <li>I visit and measure on site.</li>
-        <li>Plans drafted, quality checked and delivered.</li>
-        <li>Minor tweaks within 7 days free.</li>
-      </ol>
-    </section>
-    <section>
-      <h2>Contact</h2>
-      <p>Email: <a href="mailto:hello@comptonpropertystudio.co.uk">hello@comptonpropertystudio.co.uk</a></p>
-      <p>Phone: <a href="tel:+447000000000">+44 7000 000000</a></p>
-      <a href="mailto:hello@comptonpropertystudio.co.uk" class="button button-primary">Book a visit</a>
-      <a href="#pricing" class="button button-secondary">See pricing</a>
-    </section>
-    <footer>
-      © 2025 Compton Property Studio • Marketing floor plans only (not for construction)
-    </footer>
+<header>
+  <div class="container nav">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="" class="logo"/>
+      <div>Compton Property Studio</div>
+    </div>
+    <nav>
+      <button class="mobile-toggle btn-outline" onclick="document.querySelector('nav ul').classList.toggle('open')">Menu</button>
+      <ul>
+        <li><a href="index.html" id="nav-home">Home</a></li>
+        <li><a href="services.html" id="nav-services">Services</a></li>
+        <li><a href="pricing.html" id="nav-pricing">Pricing</a></li>
+        <li><a href="examples.html" id="nav-examples">Examples</a></li>
+        <li><a href="contact.html" id="nav-contact" class="btn-outline">Contact</a></li>
+      </ul>
+    </nav>
   </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <span class="badge">Plymouth • Floor plans in 24–48h</span>
+    <h1>Fast, accurate, agent-ready floor plans</h1>
+    <p>Clean plans with room labels, key dimensions, north arrow and scale bar. Delivered as A4/A3 PDF and listing-ready images. Optional HMO room-size check (advisory). Local, punctual, no faff.</p>
+    <div class="kpis">
+      <div class="pill">Standard plan Â£100</div>
+      <div class="pill">Next-day +Â£40</div>
+      <div class="pill">HMO check +Â£40</div>
+      <div class="pill">PL postcodes included</div>
+    </div>
+    <div class="kpis">
+      <a class="btn" href="contact.html">Book a visit</a>
+      <a class="btn-outline" href="pricing.html">See pricing</a>
+    </div>
+  </section>
+
+  <section class="section grid cols-3">
+    <div class="card">
+      <h3>Agent-ready files</h3>
+      <p class="notice">A4/A3 PDFs + PNG/JPG that drop straight into portals and brochures.</p>
+      <ul class="list">
+        <li>Room labels + key dimensions</li>
+        <li>Total approx. area</li>
+        <li>North arrow + scale bar</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Reliable turnarounds</h3>
+      <p class="notice">Standard delivery in 24–48h. Limited next-day slots available.</p>
+      <ul class="list">
+        <li>Tidy, legible drawings</li>
+        <li>Minor tweaks free (7 days)</li>
+        <li>Predictable time windows</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>HMO room-size check</h3>
+      <p class="notice">Advisory bedroom schedule with usable areas to speed landlord decisions.</p>
+      <ul class="list">
+        <li>Bundle with the visit</li>
+        <li>Clearly annotated</li>
+        <li>Not a licensing decision</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    Â© <span id="y"></span> Compton Property Studio • Marketing floor plans (not for construction).
+  </div>
+</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+<script>
+  const path = location.pathname.split('/').pop() || 'index.html';
+  const map = {"index.html":"nav-home","services.html":"nav-services","pricing.html":"nav-pricing","examples.html":"nav-examples","contact.html":"nav-contact"};
+  if (map[path]) {
+    document.getElementById(map[path]).classList.add('active');
+  }
+</script>
 </body>
 </html>
