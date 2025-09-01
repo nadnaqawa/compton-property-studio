@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — Compton Property Studio</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header>
+  <div class="container nav">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="" class="logo"/>
+      <div>Compton Property Studio</div>
+    </div>
+    <nav>
+      <button class="mobile-toggle btn-outline" onclick="document.querySelector('nav ul').classList.toggle('open')">Menu</button>
+      <ul>
+        <li><a href="index.html" id="nav-home">Home</a></li>
+        <li><a href="services.html" id="nav-services">Services</a></li>
+        <li><a href="pricing.html" id="nav-pricing">Pricing</a></li>
+        <li><a href="examples.html" id="nav-examples">Examples</a></li>
+        <li><a href="contact.html" id="nav-contact" class="btn-outline">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section class="hero">
+    <h1>Book a visit</h1>
+    <p>Email: <a href="mailto:hello@comptonpropertystudio.co.uk">hello@comptonpropertystudio.co.uk</a> &nbsp;|&nbsp;
+       Phone: <a href="tel:+447000000000">+44 7000 000000</a></p>
+    <div class="kpis">
+      <a class="btn" href="mailto:hello@comptonpropertystudio.co.uk?subject=Book%20a%20floor%20plan&body=Address%3A%0D%0APreferred%20time%3A%0D%0AScope%20(standard%2Fnext-day%2FHMO)%3A%0D%0AAccess%20details%3A">Book by email</a>
+      <a class="btn-outline" href="pricing.html">See pricing</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>FAQs</h2>
+    <div class="card"><h3>How long is a visit?</h3><p>30–90 minutes typical depending on size and complexity.</p></div>
+    <div class="card"><h3>What’s included?</h3><p>A4/A3 PDF and portal-ready images, with minor tweaks (7 days).</p></div>
+    <div class="card"><h3>Do you cover outside PL?</h3><p>Yes — travel at £0.50/mile beyond PL postcodes.</p></div>
+  </section>
+</main>
+<footer>
+  <div class="container">
+    © <span id="y"></span> Compton Property Studio • Marketing floor plans (not for construction).
+  </div>
+</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+<script>
+  const path = location.pathname.split('/').pop() || 'index.html';
+  const map = {"index.html":"nav-home","services.html":"nav-services","pricing.html":"nav-pricing","examples.html":"nav-examples","contact.html":"nav-contact"};
+  if(map[path]) document.getElementById(map[path]).classList.add('active');
+</script>
+</body></html>

@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Services — Compton Property Studio</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header>
+  <div class="container nav">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="" class="logo"/>
+      <div>Compton Property Studio</div>
+    </div>
+    <nav>
+      <button class="mobile-toggle btn-outline" onclick="document.querySelector('nav ul').classList.toggle('open')">Menu</button>
+      <ul>
+        <li><a href="index.html" id="nav-home">Home</a></li>
+        <li><a href="services.html" id="nav-services">Services</a></li>
+        <li><a href="pricing.html" id="nav-pricing">Pricing</a></li>
+        <li><a href="examples.html" id="nav-examples">Examples</a></li>
+        <li><a href="contact.html" id="nav-contact" class="btn-outline">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section class="hero"><h1>Services</h1><p>Clear deliverables, predictable timelines.</p></section>
+  <section class="section grid cols-3">
+    <div class="card"><h3>Standard floor plan</h3><p>Measured survey and tidy plan with labels, key dimensions, approx. GIA, north arrow, scale bar.</p></div>
+    <div class="card"><h3>Next-day turnaround</h3><p>Deliver by 6pm next working day (limited slots). Ideal for fast listings.</p></div>
+    <div class="card"><h3>HMO room-size check (advisory)</h3><p>Annotated bedroom schedule with usable areas. Helps decisions; not a licensing judgment.</p></div>
+  </section>
+  <section class="section">
+    <h2>What you receive</h2>
+    <table>
+      <tr><th>Format</th><th>Details</th></tr>
+      <tr><td>PDF (A4/A3)</td><td>Print-friendly, clean linework, clear labels</td></tr>
+      <tr><td>Images</td><td>PNG/JPG for portals and brochures</td></tr>
+      <tr><td>Revisions</td><td>Minor tweaks within 7 days, no fuss</td></tr>
+    </table>
+  </section>
+</main>
+<footer>
+  <div class="container">
+    © <span id="y"></span> Compton Property Studio • Marketing floor plans (not for construction).
+  </div>
+</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+<script>
+  const path = location.pathname.split('/').pop() || 'index.html';
+  const map = {"index.html":"nav-home","services.html":"nav-services","pricing.html":"nav-pricing","examples.html":"nav-examples","contact.html":"nav-contact"};
+  if(map[path]) document.getElementById(map[path]).classList.add('active');
+</script>
+</body></html>
