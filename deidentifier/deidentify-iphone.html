@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<!--
+  UK Patient Text De-identifier — iPhone version (one column, large buttons, tabs).
+  Single self-contained file: no external libraries, fonts, images, AI or network requests.
+  All detection rules and word lists are in SECTION 1 at the top of the <script> below.
+  The detection code (sections 1-4) is identical in the Mac and iPhone versions; if you
+  edit the rules in one, copy SECTION 1 into the other so they stay the same.
+-->
+<html lang="en-GB" data-variant="mobile">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
+<title>De-identifier</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f6f9; --card: #ffffff; --ink: #1c2330; --muted: #5a6475; --line: #d9dee6; --soft: #eef1f5;
+  --accent: #1d5fc4; --accent-ink: #ffffff; --accent-soft: #e5eefc; --danger: #b3261e;
+  --warn-bg: #fff5d9; --warn-line: #e3b21f; --ok: #1f7a3d;
+  --radius: 10px; --shadow: 0 1px 2px rgba(20, 30, 50, .06), 0 2px 8px rgba(20, 30, 50, .05);
+  --c-NAME: #ffd5d5; --b-NAME: #cf3f3f;
+  --c-NHS: #d6e4ff; --b-NHS: #3567cf;
+  --c-DOB: #ffdcba; --b-DOB: #cf6f1f;
+  --c-DATE: #fff1a6; --b-DATE: #a88a00;
+  --c-PHONE: #cdf1d6; --b-PHONE: #26884a;
+  --c-EMAIL: #e7dbff; --b-EMAIL: #7349c9;
+  --c-ADDRESS: #f9d6ee; --b-ADDRESS: #b63f8e;
+  --c-POSTCODE: #c8eef1; --b-POSTCODE: #16848e;
+  --c-NINO: #dce5ee; --b-NINO: #48647f;
+  --c-RECORD: #ecdfc8; --b-RECORD: #85642c;
+  --c-CUSTOM: #dcdcdc; --b-CUSTOM: #4d4d4d;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+h1, h2, h3 { line-height: 1.25; margin: 0; }
+h1 { font-size: 1.45rem; }
+h2 { font-size: 1.05rem; }
+h3 { font-size: .95rem; }
+small, .hint { color: var(--muted); font-size: .85rem; }
+button, .btn { font: inherit; font-weight: 600; border: 1px solid var(--line); background: #fff; color: var(--ink);
+  border-radius: 8px; padding: .5rem .9rem; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem;
+  touch-action: manipulation; text-decoration: none; }
+button:hover, .btn:hover { background: var(--soft); }
+button:focus-visible, .btn:focus-visible, textarea:focus-visible, [tabindex]:focus-visible, input:focus-visible {
+  outline: 3px solid #8fb4f0; outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.primary:hover { background: #174ea3; }
+button.danger { color: var(--danger); }
+button.link { border: 0; background: none; color: var(--accent); padding: .2rem .3rem; font-weight: 600; }
+textarea { width: 100%; font: 15px/1.5 var(--font); color: var(--ink); background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; padding: .6rem .7rem; resize: vertical; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .3rem .8rem; margin-bottom: .6rem; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.note { background: var(--warn-bg); border: 1px solid var(--warn-line); border-left-width: 5px; border-radius: 8px;
+  padding: .55rem .8rem; margin-top: .7rem; }
+.msg { font-size: .9rem; color: var(--muted); }
+.msg.error { color: var(--danger); font-weight: 600; }
+.msg.good { color: var(--ok); }
+.privacy { color: var(--muted); font-size: .85rem; }
+.cats { display: grid; gap: .25rem .8rem; }
+.cats label, .opt { display: flex; align-items: center; gap: .5rem; padding: .15rem 0; cursor: pointer; }
+.cats input, .opt input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); flex: none; }
+.sw { width: .95rem; height: .95rem; border-radius: 3px; flex: none; border: 1px solid; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { font-weight: 700; margin-bottom: .35rem; padding: 0; }
+.lists label { display: block; font-weight: 700; }
+.lists small { display: block; font-weight: 400; margin-bottom: .25rem; }
+.lists textarea { min-height: 5.5rem; font-size: .92rem; }
+.summary { margin: 0; font-weight: 600; }
+.summary .flag-note { color: var(--danger); }
+.stale { color: var(--danger); font-weight: 600; font-size: .9rem; }
+.text { white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; padding: .75rem .85rem; font: 14.5px/1.6 var(--font); overflow: auto; }
+.text mark, .text .ph { border-radius: 3px; padding: 0 1px; cursor: pointer; color: inherit; border-bottom: 2px solid; }
+.text .ph { font-weight: 700; font-size: .92em; }
+.text mark:hover, .text .ph:hover { filter: brightness(.93); text-decoration: line-through; text-decoration-thickness: 2px; }
+.text .flag { outline: 2px dashed var(--danger); outline-offset: 1px; }
+.text .low { border-bottom-style: dotted; }
+.t-NAME { background: var(--c-NAME); border-color: var(--b-NAME) !important; }
+.t-NHS { background: var(--c-NHS); border-color: var(--b-NHS) !important; }
+.t-DOB { background: var(--c-DOB); border-color: var(--b-DOB) !important; }
+.t-DATE { background: var(--c-DATE); border-color: var(--b-DATE) !important; }
+.t-PHONE { background: var(--c-PHONE); border-color: var(--b-PHONE) !important; }
+.t-EMAIL { background: var(--c-EMAIL); border-color: var(--b-EMAIL) !important; }
+.t-ADDRESS { background: var(--c-ADDRESS); border-color: var(--b-ADDRESS) !important; }
+.t-POSTCODE { background: var(--c-POSTCODE); border-color: var(--b-POSTCODE) !important; }
+.t-NINO { background: var(--c-NINO); border-color: var(--b-NINO) !important; }
+.t-RECORD { background: var(--c-RECORD); border-color: var(--b-RECORD) !important; }
+.t-CUSTOM { background: var(--c-CUSTOM); border-color: var(--b-CUSTOM) !important; }
+.legend { display: flex; flex-wrap: wrap; gap: .35rem; margin: .4rem 0 .7rem; }
+.chip { display: inline-flex; align-items: center; gap: .3rem; border-radius: 999px; padding: .1rem .55rem; font-size: .82rem;
+  border: 1px solid; white-space: nowrap; }
+.chip b { font-variant-numeric: tabular-nums; }
+.ph-chip { font-family: var(--mono); font-size: .82rem; font-weight: 700; border-radius: 4px; padding: .05rem .35rem;
+  border-bottom: 2px solid; white-space: nowrap; }
+.flag-txt { color: var(--danger); font-weight: 600; }
+.low-txt { color: var(--muted); }
+.drop { position: relative; }
+.drop-overlay { display: none; position: absolute; inset: 0; border: 3px dashed var(--accent); border-radius: 8px;
+  background: rgba(229, 238, 252, .92); color: var(--accent); font-weight: 700; font-size: 1.1rem;
+  align-items: center; justify-content: center; pointer-events: none; }
+.drop.over .drop-overlay { display: flex; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 1.2rem; z-index: 60; background: #1f2633; color: #fff;
+  border-radius: 10px; padding: .6rem .8rem .6rem 1rem; display: flex; align-items: center; gap: .8rem; max-width: calc(100% - 2rem);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .25); font-size: .92rem; }
+.toast button { background: transparent; color: #9cc2ff; border: 0; padding: .3rem .5rem; }
+.modal { position: fixed; inset: 0; z-index: 70; background: rgba(15, 20, 30, .45); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal-box { background: #fff; border-radius: 12px; padding: 1rem; width: min(640px, 100%); display: grid; gap: .7rem; }
+.modal-box textarea { min-height: 12rem; font-size: 14px; }
+[hidden] { display: none !important; }
+noscript .note { margin: 1rem; }
+footer { max-width: 1400px; margin: 0 auto; padding: 1rem 1.2rem 2rem; }
+</style>
+<style>
+body { font-size: 16px; padding-bottom: env(safe-area-inset-bottom); }
+header.top { padding: calc(1rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left)); }
+header.top h1 { font-size: 1.3rem; }
+header.top p { margin: .2rem 0 0; color: var(--muted); font-size: .92rem; }
+.wrap { padding: .8rem max(.8rem, env(safe-area-inset-right)) 1rem max(.8rem, env(safe-area-inset-left)); display: grid; gap: .8rem; }
+.card { padding: .85rem; }
+textarea, .lists textarea { font-size: 16px; }   /* 16px stops iOS zooming in when you tap a box */
+#input { min-height: 38vh; }
+button, .btn { min-height: 44px; padding: .55rem .9rem; justify-content: center; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .6rem; }
+.grid2 .primary { grid-column: 1 / -1; font-size: 1.05rem; }
+details.card > summary { font-weight: 700; font-size: 1.05rem; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; min-height: 32px; }
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary::after { content: "Show"; color: var(--accent); font-size: .9rem; font-weight: 600; }
+details.card[open] > summary::after { content: "Hide"; }
+.settings-body { display: grid; gap: 1rem; margin-top: .8rem; }
+.cats label, .opt { min-height: 40px; }
+.cats input, .opt input { width: 1.35rem; height: 1.35rem; }
+.lists { display: grid; gap: .8rem; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 10px; padding: 3px; margin: .5rem 0 .6rem; }
+.tabs button { border: 0; background: transparent; border-radius: 8px; min-height: 40px; }
+.tabs button[aria-selected="true"] { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.text { max-height: 65vh; font-size: 15.5px; -webkit-user-select: text; user-select: text; }
+.text mark, .text .ph { -webkit-tap-highlight-color: rgba(0,0,0,.08); }
+.help { margin: 0; color: var(--muted); font-size: .9rem; }
+.out-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .6rem; }
+.found { display: grid; gap: .5rem; margin-top: .5rem; }
+.fcard { border: 1px solid var(--line); border-radius: 10px; padding: .6rem .7rem; display: grid; gap: .25rem; background: #fff; }
+.fcard .top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.fcard .orig { word-break: break-word; }
+.fcard .meta { color: var(--muted); font-size: .85rem; }
+.fcard button { min-height: 36px; padding: .3rem .7rem; font-size: .9rem; }
+.selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; background: #fff; border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 16px rgba(0,0,0,.12); padding: .6rem max(.8rem, env(safe-area-inset-right)) calc(.6rem + env(safe-area-inset-bottom)) max(.8rem, env(safe-area-inset-left));
+  display: flex; gap: .5rem; align-items: center; }
+.selbar .primary { flex: 1; }
+.selbar span { flex: 1 1 40%; font-size: .9rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast { bottom: calc(1rem + env(safe-area-inset-bottom)); }
+footer { padding: .5rem 1rem calc(2rem + env(safe-area-inset-bottom)); }
+</style>
+</head>
+<body>
+<noscript><div class="note"><strong>JavaScript isn’t running here</strong>, so this tool can’t work. On iPhone, the Files app preview can’t run it – see the instructions that came with this file.</div></noscript>
+<header class="top">
+  <h1>Patient Text De-identifier</h1>
+  <p>Works on this phone only. Nothing is uploaded, saved or sent.</p>
+  <div class="note" role="note"><strong>Automated redaction can miss things.</strong> Always check the output before sharing.</div>
+</header>
+
+<main class="wrap">
+  <section class="card" aria-labelledby="h-in">
+    <div class="card-head"><h2 id="h-in">1. Add your text</h2></div>
+    <div class="drop" id="drop">
+      <textarea id="input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+        data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"
+        placeholder="Paste text here, or choose a .txt, .csv or .docx file below" aria-label="Text to de-identify"></textarea>
+      <div class="drop-overlay">Drop the file to load it</div>
+    </div>
+    <div class="grid2">
+      <button id="btnRun" class="primary" type="button">De-identify</button>
+      <label class="btn" for="file" tabindex="0" id="fileLabel">Choose file</label>
+      <input type="file" id="file" accept=".txt,.csv,.tsv,.docx,.pdf,.doc,text/plain,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+      <button id="btnExample" type="button">Load example</button>
+      <button id="btnClear" class="danger" type="button">Clear all</button>
+    </div>
+    <p id="msg" class="msg" role="status" aria-live="polite"></p>
+  </section>
+
+  <details class="card" id="settingsBox">
+    <summary>2. Settings</summary>
+    <div class="settings-body">
+      <fieldset>
+        <legend>Redact these</legend>
+        <div id="cats" class="cats"></div>
+        <label class="opt"><input type="checkbox" id="keepYear"> Keep the year in other dates</label>
+      </fieldset>
+      <div class="lists">
+        <label for="always">Always redact<small>One per line, e.g. patient’s name, GP practice, ward</small>
+          <textarea id="always" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" data-gramm="false"></textarea></label>
+        <label for="never">Never redact<small>One per line: words it removes by mistake</small>
+          <textarea id="never" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" data-gramm="false"></textarea></label>
+      </div>
+    </div>
+  </details>
+
+  <section class="card" id="results" hidden aria-labelledby="h-rev">
+    <div class="card-head"><h2 id="h-rev">3. Review</h2></div>
+    <p id="summary" class="summary" aria-live="polite"></p>
+    <p id="stale" class="stale" hidden>The text has changed – tap De-identify again.</p>
+    <div class="tabs" role="tablist">
+      <button id="tabOut" role="tab" aria-selected="true" aria-controls="paneOut" type="button">Output</button>
+      <button id="tabOrig" role="tab" aria-selected="false" aria-controls="paneOrig" type="button">Original</button>
+    </div>
+    <div id="paneOut" role="tabpanel">
+      <div class="out-actions"><button id="btnCopy" class="primary" type="button">Copy output</button><button id="btnDownload" type="button">Download .txt</button></div>
+      <div id="out" class="text" aria-label="De-identified output"></div>
+    </div>
+    <div id="paneOrig" role="tabpanel" hidden>
+      <div class="legend" id="legend"></div>
+      <div id="orig" class="text" aria-label="Original text with detections highlighted"></div>
+    </div>
+    <p class="help" style="margin-top:.6rem">Tap a highlight to un-redact it everywhere. Press and hold to select any other text, then tap “Redact” at the bottom of the screen.</p>
+    <h3 style="margin-top:1rem">Everything found</h3>
+    <p class="help">For review only – never included in the copied or downloaded output.</p>
+    <div id="found" class="found"></div>
+  </section>
+</main>
+
+<footer class="privacy">
+  Privacy: all network connections are blocked, nothing is stored, and everything disappears when you close the tab.
+</footer>
+
+<div id="selBar" class="selbar" hidden><span id="selText"></span><button id="selBtn" class="primary" type="button">Redact everywhere</button><button id="selCancel" type="button">Cancel</button></div>
+<div id="toast" class="toast" hidden role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
+<div id="copyModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="copyTitle">
+  <div class="modal-box">
+    <h2 id="copyTitle">Copy the output</h2>
+    <p style="margin:0">Automatic copying was blocked. Press and hold the text below, choose <b>Select All</b>, then <b>Copy</b>.</p>
+    <textarea id="copyArea" readonly spellcheck="false"></textarea>
+    <div class="row"><button id="copyClose" class="primary" type="button">Done</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =========================================================================
+   SECTION 1 — SETTINGS, DETECTION RULES AND WORD LISTS
+   -------------------------------------------------------------------------
+   Everything you are likely to want to change is in this section.
+   • Word lists are plain text: separate entries with spaces or new lines.
+   • Lists are matched without regard to case unless a comment says otherwise.
+   • Phrase lists (labels, sign-offs) are arrays of strings.
+   ========================================================================= */
+const CONFIG = {
+
+  /* Categories: id (internal), label (shown in settings), placeholder
+     (text used in the output), one/many (used in the summary), on (default). */
+  categories: [
+    { id: 'NAME',     label: 'Names',                        placeholder: 'PERSON',        one: 'name',            many: 'names',            on: true },
+    { id: 'NHS',      label: 'NHS / CHI / H&C numbers',      placeholder: 'NHS NUMBER',    one: 'NHS number',      many: 'NHS numbers',      on: true },
+    { id: 'DOB',      label: 'Dates of birth',               placeholder: 'DATE OF BIRTH', one: 'date of birth',   many: 'dates of birth',   on: true },
+    { id: 'DATE',     label: 'Other dates',                  placeholder: 'DATE',          one: 'other date',      many: 'other dates',      on: true },
+    { id: 'PHONE',    label: 'Phone numbers',                placeholder: 'PHONE',         one: 'phone number',    many: 'phone numbers',    on: true },
+    { id: 'EMAIL',    label: 'Email addresses',              placeholder: 'EMAIL',         one: 'email address',   many: 'email addresses',  on: true },
+    { id: 'ADDRESS',  label: 'Street addresses',             placeholder: 'ADDRESS',       one: 'address line',    many: 'address lines',    on: true },
+    { id: 'POSTCODE', label: 'Postcodes',                    placeholder: 'POSTCODE',      one: 'postcode',        many: 'postcodes',        on: true },
+    { id: 'NINO',     label: 'National Insurance numbers',   placeholder: 'NI NUMBER',     one: 'NI number',       many: 'NI numbers',       on: true },
+    { id: 'RECORD',   label: 'Hospital / record numbers',    placeholder: 'RECORD NUMBER', one: 'record number',   many: 'record numbers',   on: true },
+    { id: 'CUSTOM',   label: '“Always redact” list',         placeholder: 'REDACTED',      one: 'custom item',     many: 'custom items',     on: true }
+  ],
+
+  /* Placeholder style. {P} = placeholder text above, {N} = number.
+     Set numberPlaceholders to false to get plain [PERSON], [DATE] etc. */
+  numberPlaceholders: true,
+  placeholderFormat: '[{P} {N}]',
+  placeholderFormatWithYear: '[{P} {N} ({Y})]',   // used when "keep the year" is ticked
+  keepYearDefault: false,
+  downloadFileName: 'deidentified.txt',           // deliberately generic: never uses the original file name
+
+  /* ---------------------------------------------------------------- NAMES */
+
+  /* Titles that introduce a name (case-sensitive; a trailing full stop is allowed). */
+  titles: 'Mr MR Mrs MRS Ms MS Miss MISS Mx MX Master Dr DR Doctor Prof PROF Professor Sir Dame Rev Revd Reverend Sister Lady Lord Father Fr Cllr Nurse Matron',
+
+  /* Labels whose next words are a name when followed by ":" (or "-"). */
+  nameLabelsWithColon: [
+    'patient name', "patient's name", 'patient', 'full name', 'name', 'client name', 'client', 'service user', 'resident',
+    'surname', 'last name', 'family name', 'forenames', 'forename', 'first names', 'first name', 'given names', 'given name',
+    'middle names', 'middle name', 'preferred name', 'maiden name', 'previous name', 'alias', 'aka',
+    'next of kin', 'nok', 'usual gp', 'registered gp', 'gp name', 'gp', 'named consultant', 'consultant', 'main carer', 'carer',
+    'clinician', 'doctor', 'named nurse', 'nurse', 'key worker', 'keyworker', 'social worker', 'care coordinator', 'therapist',
+    'physiotherapist', 'midwife', 'health visitor', 'mother', 'father', 'parent', 'guardian', 'husband', 'wife', 'partner',
+    'spouse', 'son', 'daughter', 'emergency contact', 'contact name', 'contact', 'informant', 'interpreter', 'witness',
+    'author', 'signature', 'referrer', 'referring clinician', 'attn', 'attention', 'fao', 'to', 'from', 'copy to', 'copies to'
+  ],
+
+  /* Phrases whose next words are a name, colon optional. */
+  nameLabelsFree: [
+    'dear', 'seen by', 'signed by', 'signed', 'referred by', 'dictated by', 'typed by', 'reviewed by', 'examined by',
+    'discharged by', 'written by', 'verified by', 'authorised by', 'authorized by', 'checked by', 'prepared by',
+    'completed by', 'requested by', 'reported by', 'known as', 'next of kin', 'nok', 'fao', 'attn', 'cc', 'c.c.',
+    'accompanied by', 'spoke to', 'spoke with', 'visited by', 'collected by', 'brought in by', 'escorted by',
+    'supported by', 'care of', 'c/o'
+  ],
+
+  /* Sign-offs: the first non-blank line after these is treated as a name. */
+  signOffs: [
+    'yours sincerely', 'yours faithfully', 'yours truly', 'yours ever', 'kind regards', 'best regards', 'warm regards',
+    'warmest regards', 'with best wishes', 'with kind regards', 'best wishes', 'many thanks', 'with thanks', 'thanks',
+    'thank you', 'regards', 'best', 'cheers'
+  ],
+
+  /* Relationship words followed by a capitalised word = a name ("her daughter Sarah"). */
+  relationships: 'wife husband partner spouse daughter son daughters sons child children mother mum mom father dad parent parents ' +
+    'brother sister brothers sisters sibling twin grandmother grandfather granddaughter grandson grandchild grandchildren nan nana ' +
+    'nanna gran granny grandma grandad grandpa aunt auntie aunty uncle niece nephew cousin friend neighbour neighbor carer ' +
+    'fiancé fiancée fiance fiancee girlfriend boyfriend stepson stepdaughter stepmother stepfather step-son step-daughter ' +
+    'step-mother step-father son-in-law daughter-in-law mother-in-law father-in-law brother-in-law sister-in-law ' +
+    'widow widower ex-wife ex-husband ex-partner lodger flatmate housemate landlord landlady employer colleague guardian ' +
+    'godmother godfather goddaughter godson advocate keyworker',
+
+  /* Lower-case particles allowed inside names (e.g. "van der Merwe", "bin Ahmed"). */
+  nameParticles: 'de da di del della van von der den le la du bin binti ibn al el ap dos das y',
+
+  /* Words that are also names but are everyday words. These are only
+     redacted when there is supporting evidence (a title, a label, a
+     relationship word, or a neighbouring name). */
+  ambiguousNames: `
+    Will May Mark Grace Hope Rose Faith Joy Patience Comfort Blessing Precious Gift Mercy Destiny Charity Honour Justice
+    Summer Autumn April June August Dawn Hazel Holly Ivy Lily Daisy Amber Ruby Pearl Iris Violet Heather Jasmine Olive
+    Poppy Sky Crystal Jade Sunny Harmony Christian Earl Major Guy Frank Bob Bill Ray Rob Nick Pat Sue Jan Eve Don Dean
+    Drew Grant Chase Hunter Miles Rich Carol Art Lance Victor Norman Jack Kay Wade Dale Clay Reed
+    Brown White Young King Hill Green Black Wood Hall Cook Baker Carter Cross Field Ford Fox Gray Grey Hart Lamb Long Lord
+    Marsh Mason Mills Moss Page Pope Price Rice Short Stone Swift Sweet Wall Ward Webb Wells West Wise Little Low Bishop
+    Church Hood Lane Knight Porter Sharp Street Walker Waters Weaver Bright Brook Brooks Cole Day Bell Ball Bush Burns
+    Chambers Cotton Fisher Frost Gates Glass Gold Good Hand Hardy Heath Hunt Law Love Moon Nash Noble Park Parks Parsons
+    Pike Poole Potter Power Rivers Rock Savage Shepherd Silver Slater Small Spring Steel Strong Summers Temple Thorn
+    Winter Wolf Woods Banks Dunn Hope Mann Marks Newman English French Welsh Scott Lee Chance Joseph
+    Ma He Ho Do Le Ye Pan Song Tang Ding Dong Man Wing Pop Said Islam Kin Sun Cheng
+  `,
+
+  /* Common first names (a few hundred, reflecting the UK's population). */
+  firstNames: `
+    Aaron Abigail Adam Adrian Aidan Alan Alastair Albert Alex Alexander Alexandra Alfie Alfred Alice Alison Amanda Amelia Amy
+    Andrew Angela Ann Anna Anne Annie Anthony Archie Arthur Ashley Audrey Barbara Barry Beatrice Ben Benjamin Bernard Beth
+    Bethany Beverley Brandon Brenda Brian Bridget Caitlin Callum Cameron Carl Caroline Catherine Charles Charlie Charlotte
+    Chloe Christine Christopher Claire Colin Connor Craig Daniel Darren David Deborah Declan Denise Dennis Derek Diana Diane
+    Dominic Donna Doreen Doris Dorothy Douglas Dylan Edith Edward Eileen Eleanor Elizabeth Ella Ellie Elsie Emily Emma Eric
+    Ethan Evelyn Fiona Finley Florence Frances Freddie Freya Gareth Gary Gavin Gemma Geoffrey George Georgia Gerald Gillian
+    Gladys Gordon Graham Gwen Hannah Harriet Harry Harvey Heidi Helen Henry Hugh Ian Imogen Irene Isaac Isabel Isabella Isla
+    Jacob Jake James Jamie Janet Jane Jason Jennifer Jessica Joan Joanna Joanne John Jonathan Josh Joshua Joyce Julia Julie
+    Karen Kate Katherine Kathleen Katie Keith Kelly Kenneth Kevin Kieran Kirsty Laura Lauren Leah Leo Leon Lesley Lewis Liam
+    Linda Lisa Logan Lorraine Louise Lucy Luke Lynn Margaret Maria Marie Martin Mary Matthew Maureen Megan Melanie Michael
+    Michelle Mildred Molly Nathan Neil Nicholas Nicola Noah Oliver Olivia Oscar Owen Pamela Patricia Patrick Paul Pauline
+    Peter Philip Phoebe Rachel Rebecca Rhys Richard Robert Roger Ronald Ruth Ryan Sam Samantha Samuel Sandra Sarah Scott
+    Sean Sharon Shaun Sheila Shirley Simon Sophie Stanley Stephen Steven Stuart Susan Sylvia Teresa Terence Theo Thomas
+    Timothy Toby Tom Tony Tracey Trevor Valerie Vanessa Vera Victoria Walter Wendy William Zoe
+    Seren Ffion Cerys Dafydd Gethin Iwan Aled Rhian Bronwen Eilidh Mairi Ewan Fraser Hamish Morag Aoife Ciaran Siobhan
+    Padraig Eoin Orla Roisin Sinead Niamh Cian Oisin Conor
+    Aarav Aditi Aditya Ajay Akash Amit Amrit Anand Anil Anita Anjali Arjun Asha Ashok Deepa Deepak Devi Dinesh Gita Gurpreet
+    Harjit Harpreet Harvinder Indira Jaspreet Jaswinder Kamal Kiran Krishna Kavita Lakshmi Manoj Meena Mohan Mukesh Naveen
+    Neha Nikhil Nisha Parveen Pooja Pradeep Prakash Priya Rahul Raj Rajesh Rakesh Ramesh Ravi Rekha Rohan Sachin Sanjay
+    Sanjeev Santosh Shanti Shreya Sita Sunil Sunita Suresh Usha Vijay Vikram Vinod Amandeep Baljit Balvinder Manpreet
+    Navdeep Rupinder Simran Sukhdeep Kuldip Ranjit Tejinder Arun Karthik Lakshman Nirmala Kumari Selvi Ganesh Murali Senthil
+    Pavithra Abdul Adnan Afzal Aisha Ayesha Amir Anwar Arif Asif Bilal Farhan Farida Faisal Fatima Hamza Haris Humaira Imran
+    Irfan Javed Kamran Khadija Khalid Maryam Mohammed Muhammad Mohammad Mohamed Naveed Nasreen Rashid Rizwan Rubina Saima
+    Sajid Salma Shabana Shahid Shazia Sohail Tahir Tanvir Tariq Usman Waqar Yasmin Zainab Zara Zubair Nusrat Rahima Shahana
+    Jahanara Shamima Nazia Abdur Delwar Rokeya Mizanur
+    Abimbola Adaeze Adeola Adesuwa Akua Ama Amara Ayo Ayodele Babajide Bola Chidi Chiamaka Chidinma Chinedu Chinonso Chioma
+    Chukwuemeka Emeka Efua Femi Folake Funmi Funmilayo Ifeoma Ikenna Kemi Kofi Kwabena Kwame Kwesi Kayode Ngozi Nkechi
+    Nnamdi Obinna Olumide Oluwaseun Olu Seun Tobi Tolu Tunde Uche Yaw Yemi Abdirahman Amina Farhiya Hodan Hawa Ifrah Ayaan
+    Tendai Tatenda Chipo Rudo Farai Nyasha Themba Thandiwe Sipho Zanele Kudzai Wanjiru Njeri Achieng Akinyi
+    Delroy Winston Errol Leroy Marcia Claudette Desmond Everton Lloyd Neville Yvonne Paulette Carlton Clive Dwayne Jermaine
+    Shanice Tyrone Andre Marlon Jamal Kemar Shantelle Beverly Hyacinth Dorrett Marcus Devon
+    Agnieszka Aleksandra Andrzej Bartosz Dorota Ewa Grzegorz Jakub Kamil Katarzyna Krzysztof Łukasz Lukasz Magdalena
+    Małgorzata Malgorzata Marcin Mariusz Michał Michal Monika Paweł Pawel Piotr Tomasz Wojciech Zofia Zbigniew Andrei
+    Alexandru Bogdan Cristina Florin Ioana Ion Mihai Vasile Elena Irina Natalia Olga Svetlana Tatiana Dmitri Sergei
+    Oleksandr Olena Yulia Ivan Nikolai Jonas Tomas Lina Ruta Aurimas Andris Janis Ilze Petar Dimitar Georgi Ivana Milena
+    Nikola Jelena Marko Luka Zsofia Laszlo Gabor Attila Eszter Martina Jiri Petra Lucie Veronika
+    Wei Ming Mei Jing Xin Hui Ling Yan Ying Jun Hao Lei Tao Fang Hong Jie Xiaoming Xiaoyu Zhiwei Jianhua Yiming Yifan Zihan
+    Haoran Yuxuan Siu Kwok Hiroshi Yuki Minh Linh Thanh Huong Duc
+    Abdullah Ahmad Amal Amira Aziz Fadi Farah Hala Hana Hussein Ibrahim Jamila Karim Khaled Layla Leila Mahmoud Mariam Mona
+    Mustafa Nabil Nour Omar Rania Rami Reem Sami Samir Sara Tamer Yousef Yusuf Zaid Zahra Zeynep Mehmet Emre Elif Ayse
+    Fatma Hüseyin Reza Mohsen Parisa Shirin Dariush Kaveh Soran Rebwar Dilan
+    João Joao José Jose Carlos Luis Miguel Pedro Rui Sofia Giulia Giuseppe Marco Francesca Alessandro Lorenzo Chiara
+    Jordan Ellis Jamie Alex Morgan Riley Taylor Casey Robin
+  `,
+
+  /* Common surnames. */
+  surnames: `
+    Smith Jones Williams Taylor Davies Evans Wilson Thomas Johnson Roberts Robinson Thompson Wright Edwards Hughes Lewis
+    Harris Clarke Clark Patel Jackson Turner Martin Cooper Morris Moore Harrison Morgan Allen James Phillips Watson Davis
+    Parker Bennett Griffiths Mitchell Kelly Richardson Bailey Collins Shaw Murphy Miller Cox Richards Khan Marshall
+    Anderson Simpson Ellis Adams Singh Begum Wilkinson Foster Chapman Powell Rogers Mason Ali Hussain Campbell Matthews
+    Owen Palmer Holmes Barnes Lloyd Butler Russell Barker Stevens Jenkins Murray Dixon Harvey Graham Pearson Ahmed
+    Fletcher Walsh Kaur Gibson Howard Andrews Stewart Elliott Reynolds Saunders Payne Pearce Bradley Spencer Gill Dawson
+    Burton Watts Booth Perry Ryan Armstrong Francis Rees Hayes Hudson Barrett Lucas Carr Lowe Fraser Whitfield
+    Parkinson Tomlinson Hopkins Atkinson Hutchinson Lawson Nicholson Robertson Henderson Morrison Hamilton Johnston
+    Paterson Kerr Reid Ross Boyle Doherty Gallagher Kennedy Quinn Sullivan Byrne McDonald MacDonald McLean MacLeod
+    McKenzie Mackenzie McGregor McCarthy McLaughlin McKay O'Brien O'Connor O'Neill O'Sullivan O'Donnell O'Reilly
+    Sharma Shah Sandhu Sidhu Dhillon Grewal Bains Johal Kumar Gupta Mehta Joshi Desai Chauhan Rao Reddy Nair Menon
+    Pillai Iyer Mistry Parmar Solanki Chopra Kapoor Malhotra Bhatt Verma Mishra Chowdhury Choudhury Rahman Hossain Uddin
+    Miah Khatun Akhtar Iqbal Qureshi Siddiqui Malik Butt Mirza Raza Shaikh Sheikh Aslam Bashir Chaudhry Mahmood Nawaz
+    Riaz Saleem Yousaf Zaman Perera Fernando Silva Jayawardena Wickramasinghe Sivakumar Thangarajah Selvarajah Kandiah
+    Nadarajah Balasubramaniam Venkataraman Krishnan Subramanian Ramasamy Gunasekara
+    Adebayo Adeyemi Adewale Afolabi Akinola Okafor Okonkwo Okeke Nwosu Obi Eze Mensah Asante Boateng Owusu Osei Appiah
+    Agyeman Danso Ogunleye Balogun Bello Abubakar Abdullahi Musa Mohamud Hassan Warsame Abdi Jama Mohamed Nkosi Dube Moyo
+    Ncube Sibanda Mutasa Mwangi Kamau Otieno Odhiambo Ochieng Diallo Traore Keita Diop Ndiaye Kamara Conteh Sesay Bangura
+    Koroma Mansaray Onyango Adeleke Olaniyan Okoro Chukwu Emenike Oyelowo Oyewole Adeyinka Oladipo Petrenko Osagie
+    Samuels Bryan Gayle Forbes Blake Henry Lindo Beckford Ferguson Gordon Brathwaite Cumberbatch Greaves Maynard
+    Wiltshire Lashley Belgrave Charles Pierre Baptiste Alleyne
+    Nowak Kowalski Kowalska Wiśniewski Wisniewski Wójcik Wojcik Kowalczyk Kamiński Kaminski Lewandowski Zieliński
+    Zielinski Szymański Szymanski Woźniak Wozniak Dąbrowski Dabrowski Kozłowski Kozlowski Jankowski Mazur Kwiatkowski
+    Krawczyk Piotrowski Grabowski Nowakowski Pawłowski Pawlowski Michalski Nowicki Adamczyk Dudek Zając Zajac Wieczorek
+    Majewski Olszewski Jaworski Popescu Ionescu Popa Radu Dumitru Stoica Gheorghe Matei Ciobanu Constantin Kovalenko
+    Bondarenko Shevchenko Tkachenko Ivanov Petrov Smirnov Popov Kuznetsov Sokolov Volkov Novak Horvat Kovač Kovac
+    Kazlauskas Jankauskas Petrauskas Berzins Ozols Kalnins Georgiev Dimitrov Nikolov Todorov Nagy Kovacs Toth Szabo
+    Horvath Dvorak Novotny Svoboda
+    Wang Li Zhang Liu Chen Yang Huang Zhao Wu Zhou Xu Zhu Hu Guo Lin Luo Gao Zheng Liang Xie Feng Deng Cao Peng Zeng Xiao
+    Tian Yuan Cai Jiang Yu Du Su Lu Shen Chan Wong Cheung Lau Chow Leung Ng Yip Tsang Kwok Lam Tam Fung Mak Chiu Choi Kim
+    Nguyen Tran Pham Hoang Huynh Phan Vu Dang Bui Ngo Duong Tanaka Suzuki Sato Takahashi Watanabe
+    Hosseini Ahmadi Karimi Rezaei Mohammadi Yilmaz Kaya Demir Celik Sahin Ozturk Aydin Haddad Khoury Mansour Nasser
+    Saleh Abbas Aziz Yousef Hamid Rashed
+    Rossi Russo Ferrari Esposito Bianchi Romano Ricci Marino Santos Pereira Oliveira Costa Rodrigues Martins Ferreira
+    Garcia Rodriguez Martinez Lopez Gonzalez Hernandez Sanchez Ramirez
+  `,
+
+  /* Capitalised words that are never treated as names (headings, sentence
+     starters, clinical words, job titles, days and months…). */
+  notNames: `
+    The This That These Those He She They We I It Its His Her Hers Their Our Your My Him Them Us You Me Who Whom What When
+    Where Which Why How There Here In On At To From For With Without By Of As Is Was Were Be Been Being Has Have Had Do
+    Does Did Not No Yes All Any Some Each Every Both Either Neither Other Another Such Same Very Also Only Just Please
+    Thank Thanks Dear Yours Sincerely Faithfully Regards Kind Best Wishes Many Re Ref Subject Date Name Patient Patients
+    Client Hospital Hospitals Clinic Clinics Ward Wards Unit Department Dept Surgery Practice Centre Center Medical Health
+    Healthcare Trust Foundation General Royal University Infirmary Community Service Services Team Care Primary Secondary
+    Acute Emergency Outpatient Outpatients Inpatient Diagnosis Diagnoses Plan Plans Medication Medications Medicines Drug
+    Drugs Allergy Allergies History Examination Exam Impression Summary Management Investigations Investigation Results
+    Result Bloods Blood Imaging Follow Review Referral Discharge Admission Admitted Presenting Complaint Social Family Past
+    Current Previous Recent New Old Next Last First Second Third Left Right Bilateral Normal Abnormal Positive Negative
+    Mild Moderate Severe Chronic Stable Unstable Improving Worsening Nil None See Seen Saw Reviewed Discussed Spoke Told
+    Advised Continue Stop Start Started Increase Decrease Reduce Commenced Cardiology Neurology Oncology Haematology
+    Rheumatology Gastroenterology Respiratory Geriatrics Geriatric Elderly Medicine Orthopaedics Orthopaedic Urology
+    Gynaecology Obstetrics Paediatrics Psychiatry Psychology Dermatology Ophthalmology Radiology Endocrinology Diabetes
+    Nephrology Renal Stroke Palliative Physiotherapy Occupational Therapy Therapist Dietetics Pharmacy Pharmacist
+    Consultant Registrar Doctor Nurse Matron Specialist Practitioner Physician Surgeon Geriatrician Cardiologist
+    Neurologist Psychiatrist Radiologist Anaesthetist Midwife Paramedic Locum Junior Senior Associate Lead Manager
+    Coordinator Worker Officer Assistant Secretary Administrator Colleague Colleagues Sir Madam Team Staff Everyone
+    Monday Tuesday Wednesday Thursday Friday Saturday Sunday January February March September October November December
+    Jan Feb Mar Apr Jun Jul Aug Sep Sept Oct Nov Dec Today Tomorrow Yesterday Morning Afternoon Evening Night Week Weeks
+    Month Months Year Years Day Days Hour Hours Minute Minutes England Scotland Wales Ireland Britain Christmas Easter
+    Covid Disease Syndrome Tablet Tablets Capsule Capsules Dose Doses Daily Twice Once Weekly Monthly Contact Tel
+    Telephone Phone Mobile Email Fax Address Postcode Number Signed Signature Copy Enc Encl Attached Page Private
+    Confidential Urgent Routine Important Note Notes Letter Report Form Request Dictated Typed Electronic Electronically
+    Verified Approved Status Alive Deceased Male Female Man Woman Gentleman Lady Boy Girl Baby Child Relative Relatives
+    Neighbour However Although Because Therefore Overall Further Following After Before During Since Until While Currently
+    Previously Recently Unfortunately Fortunately Otherwise Meanwhile Additionally Finally Initially Also Again Although
+    Mental Physical Personal Independent Lying Standing Sitting Weight Height Pulse Temperature Oxygen Sats Chest Heart
+    Abdomen Head Neck Back Brain Skin Eyes Ears Nose Throat Movement Disorders Disorder Falls Fall Memory Tremor Pain
+    Sleep Mood Diet Fluids Bowels Bladder Urine Stool Mobility Walking Function Cognition Capacity Consent Risk Safety
+    Safeguarding Hypertension Asthma Dementia Cancer Infection Sepsis Pneumonia Anaemia Obesity Depression Anxiety Arthritis
+    Osteoporosis Epilepsy Scan Test Tests Level Levels Range Score Scale Grade Stage Type Group Clinical Ref Hosp
+    Unknown Other Others Various Several Unit Units Inhaler Inhalers Injection Injections Cream Drops Spray Patch
+    Referred Received Attended Accompanied Visited Called Phoned Telephoned Emailed Wrote Written Reported Noted Found
+    Agreed Arranged Booked Requested Planned Given Prescribed Supplied Collected Returned Remains Remained Reports Denies
+    Explained Informed Offered Declined Accepted Presented Complained Mentioned Confirmed Awaiting Pending Outstanding
+    Ongoing Resolved Completed Cancelled Postponed Rearranged Kindly Regarding Concerning Thereafter Afterwards
+  `,
+
+  /* Medical abbreviations and qualifications that are never names
+     (matched case-sensitively in capitals, as written here). */
+  medicalAbbreviations: `
+    NHS GP GPs COPD MRI CT DNACPR DNAR A&E AE ED ICU ITU HDU CCU AMU MAU SAU OPD BP HR RR ECG EKG EEG EMG CXR AXR USS FBC
+    U&E U&Es UE LFT LFTs TFT TFTs CRP ESR INR HbA1c eGFR BMI SpO2 O2 IV IM SC PO PR PRN OD BD TDS QDS NBM TTO TTA MDT OT
+    PT SLT SALT CPN CMHT CAMHS IAPT DN HCA ANP ACP SHO FY1 FY2 ST SpR TIA CVA MI NSTEMI STEMI AF CCF CHF HF IHD CKD AKI
+    UTI LRTI URTI PE DVT T1DM T2DM DM HTN OA RA SLE MS MND PD IBD IBS GORD PUD HIV HCV HBV TB MRSA MSSA CDIFF COVID SARS
+    NICE CQC GMC NMC HCPC BMA RCN RCP DOB NI NINO NOK MRN CHI ID DOA DOD EDD LMP PMH PSH DH SH FH HPC PC ROS NAD SOB
+    SOBOE CP NKDA MSU CSU ABG VBG LP PEG NG NGT TPN IVI PICC CVC CPAP BiPAP NIV OGD ERCP MRCP PET DEXA ECHO TTE TOE EF
+    LVEF LV RV NYHA GCS AVPU NEWS NEWS2 MUST MMSE MoCA ACE PHQ GAD AUDIT CIWA DSH ADHD ASD OCD PTSD BPAD EUPD MHA DOLS
+    DoLS LPA MCA IMCA SW DNA WNL UK NHSE ICB CCG PCN QOF EMIS PAS SCR ReSPECT EOL CPR ALS BLS RE CC PP PS NB AM PM MG
+    ML MCG IU OK TBC TBA ASAP FYI URGENT CONFIDENTIAL PRIVATE PATIENT NAME ADDRESS DATE SUMMARY DIAGNOSIS DIAGNOSES PLAN
+    MEDICATION MEDICATIONS ALLERGIES HISTORY IMPRESSION EXAMINATION INVESTIGATIONS RESULTS MANAGEMENT ACTIONS
+    RECOMMENDATIONS OUTCOME DISCHARGE ADMISSION REFERRAL CLINIC LETTER REPORT NOTES NOTE REVIEW FOLLOW UP TEL FAX EMAIL
+    MOB HOSPITAL WARD UNIT TRUST DEPARTMENT DEPT DR MR MRS MS MISS MX PROF RN RGN RMN RNLD RSCN RM NMP HOSP REF
+    MBBS MBChB MB BS ChB BCh BAO MD FRCP MRCP MRCGP FRCGP FRCS MRCS FRCA FRCR FRCPath MRCPsych FRCPsych MRCOG FRCOG
+    DRCOG DCH DFSRH DGM BSc MSc MA BA PhD DPhil MCSP FHEA PGCert PGDip Hons FFICM FRCEM MRCEM FRCPCH MRCPCH FRCPE FRCSEd
+    MFPH MPH DipHE AKA NFA
+  `,
+
+  /* Medical eponyms: left alone when used as a condition ("Parkinson's disease",
+     "Bell's palsy"), still redacted after a title ("Mr Parkinson"). */
+  eponyms: `
+    Parkinson Alzheimer Crohn Hodgkin Addison Cushing Graves Huntington Raynaud Barrett Wilson Bell Down Guillain-Barré
+    Guillain-Barre Guillain Barré Barre Apgar Hashimoto Kaposi Bright Conn Paget Meniere Ménière Sjögren Sjogren Tourette
+    Asperger Bartholin Baker Colles Smith Dupuytren Peyronie Kawasaki Marfan Turner Klinefelter Lyme Hirschsprung Wernicke
+    Korsakoff Korsakov Bowen Burkitt Ewing Wilms Perthes Horner Charcot Reiter Still Behçet Behcet Takayasu Wegener Fallot
+    Tietze Osler Virchow Whipple Lewy Pick Creutzfeldt-Jakob Jakob Kussmaul Murphy Trendelenburg Romberg Babinski Phalen
+    Tinel Homan Homans McBurney Rovsing Gleason Breslow Clark Dukes Glasgow Child-Pugh Wells Rockall Blatchford
+    Mallory-Weiss Boerhaave Zenker Meckel Hartmann Nissen Billroth Kocher Pfannenstiel Foley Hickman Guedel Snellen
+    Ishihara Weber Rinne Epley Dix-Hallpike Valsalva Heimlich Mantoux Coombs Gram Stevens-Johnson Lynch Gilbert
+    Budd-Chiari Sheehan Fanconi Alport Goodpasture Berger Henoch-Schönlein Henoch-Schonlein Willebrand Tay-Sachs Gaucher
+    Fabry Pompe Hurler Duchenne Becker Erb Klumpke Sturge-Weber Chiari Arnold-Chiari Angelman Prader-Willi Rett Noonan
+    Dressler Prinzmetal Ludwig Bence-Jones Cheyne-Stokes Stokes-Adams Brugada Osgood-Schlatter Legg-Calvé-Perthes Colles
+    Barlow Ortolani Kernig Brudzinski Chvostek Trousseau Cullen Grey-Turner Courvoisier Virchow Sister-Mary-Joseph
+  `,
+
+  /* Eponyms that mean the condition even without a following word ("has Alzheimer's"). */
+  eponymsStandalone: 'Parkinson Alzheimer Crohn Huntington Raynaud Addison Cushing Hodgkin Graves Asperger Tourette Meniere Ménière Paget Sjögren Sjogren Behçet Behcet Kawasaki Perthes Dupuytren',
+
+  /* Eponyms that are (almost) never a person's name in clinical text. */
+  eponymsAlways: 'Guillain-Barré Guillain-Barre Guillain Apgar Creutzfeldt-Jakob Stevens-Johnson Mallory-Weiss Budd-Chiari Tay-Sachs Arnold-Chiari Prader-Willi Cheyne-Stokes Stokes-Adams Osgood-Schlatter Dix-Hallpike Child-Pugh Henoch-Schönlein Henoch-Schonlein Legg-Calvé-Perthes Bence-Jones',
+
+  /* Words that, after an eponym, show it is a condition/test ("Barrett's oesophagus"). */
+  eponymConditionWords: `
+    disease diseases syndrome palsy lymphoma oesophagus esophagus sign test score scale criteria phenomenon disorder reflex
+    manoeuvre maneuver classification fracture ulcer triad procedure operation tumour tumor sarcoma cyst node nodes
+    contracture dementia chorea thyroiditis arteritis encephalopathy anomaly hernia cell cells body bodies duct gland glands
+    law rule ratio index position catheter forceps incision repair type stage staging grade grading method questionnaire
+    angina diverticulum pouch purpura granulomatosis nephropathy nephritis neuroma neuralgia lymphadenopathy hypothesis
+    coma aphasia area line lines stockings sarcoidosis spots
+  `,
+
+  /* ------------------------------------------------------------- PLACES */
+
+  /* Words showing a capitalised phrase is a place or organisation, not a person
+     ("Victoria Ward", "Riverside Surgery", "Beacon Road"). */
+  placeWords: `
+    Road Street Avenue Lane Close Drive Way Crescent Court Gardens Place Terrace Grove Square Park Mews Hill Row Walk Rise
+    View Green Parade Ward Wards Unit Hospital Surgery Practice Centre Center Clinic Health Medical House Lodge Hall School
+    College University Trust Foundation Group Church Chapel Mosque Temple Gurdwara Synagogue Library Station Airport Bridge
+    Cottage Farm Estate Team Service Services Pharmacy Home Homes Nursing Residential Village Town City County District
+    Council Borough Ltd Limited PLC LLP Partnership Associates Building Tower Wing Block Suite Theatre Lab Laboratory
+    Institute Society Association Charity Hospice Infirmary Wharf Quay Manor Mansions Buildings Villas Close Heights
+  `,
+
+  /* Street-name endings: a house number + name + one of these = street address. */
+  streetSuffixes: 'Road Street Avenue Lane Close Drive Way Crescent Court Gardens Place Terrace Grove Square Park Mews Hill Row Walk Rise View Green Parade Boulevard Mount Vale Wharf Yard Circus Embankment Esplanade Gate Heights Meadow Meadows Brow Chase Croft Fold Wynd Loan Quay Villas Cottages Estate Approach Broadway Bank Common End Field Fields Glade Grange Lea Orchard Path Promenade Ridge Side Spur Vale Wood Woods Passage Alley Hollow Dene Nook Oval',
+
+  /* Short forms: only accepted at the end of a line or before a comma ("12 Oak Rd,"). */
+  streetSuffixAbbreviations: 'Rd St Ave Av Ln Dr Cres Ct Gdns Pl Sq Terr Tce Gr Pde Blvd Cl Mt Hts',
+
+  /* Words that end a building name before a street ("Willow Court, 17 Beacon Road"). */
+  buildingWords: 'Court House Lodge Cottage Cottages Farm Mansions Buildings Tower Towers Heights Hall Manor Barn Mill Villa Villas Place Point Wharf Apartments Flats Block Chambers Works Yard Gardens',
+
+  /* Words that stop a "10 Minute Walk" style phrase being read as an address. */
+  notStreetWords: 'Minute Minutes Hour Hours Day Days Week Weeks Month Months Year Years Mile Miles Metre Metres Meter Meters Step Steps Times Mg Ml Units Unit Tablets Puffs Point Points Percent',
+
+  /* Labels that introduce an address; the rest of the line and following lines are redacted. */
+  addressLabelPattern: '(?:home[ \\t]+|correspondence[ \\t]+|postal[ \\t]+|current[ \\t]+|permanent[ \\t]+|previous[ \\t]+|usual[ \\t]+|patient(?:\'s)?[ \\t]+|contact[ \\t]+)?address(?:es)?',
+
+  /* ------------------------------------------------------ NUMBERS & CODES */
+
+  /* Labels followed by a hospital / record / reference number (regular-expression
+     fragments, case-insensitive). The value must contain at least one digit. */
+  recordLabels: [
+    'hospital[ \\t]*(?:no|number|num|id)\\.?', 'hosp\\.?[ \\t]*(?:no|number)\\.?', 'mrn', 'medical[ \\t]+record[ \\t]*(?:no|number)',
+    'record[ \\t]*(?:no|number)', 'unit[ \\t]*(?:no|number)\\.?', 'patient[ \\t]*(?:id|no|number|ref|reference)\\.?',
+    'case[ \\t]*(?:no|number|ref)\\.?', 'pas[ \\t]*(?:no|number|id)', 'k[ \\t]*no\\.?', 'crn', 'client[ \\t]*(?:id|no|number)',
+    'our[ \\t]+ref(?:erence)?', 'your[ \\t]+ref(?:erence)?', 'ref(?:erence)?[ \\t]*(?:no|number)?\\.?', 'lab[ \\t]*(?:no|number)',
+    'specimen[ \\t]*(?:no|number)', 'accession[ \\t]*(?:no|number)', 'episode[ \\t]*(?:no|number|id)',
+    'encounter[ \\t]*(?:no|number|id)', 'local[ \\t]*(?:id|no|number)', 'system[ \\t]*(?:id|no|number)',
+    'emis[ \\t]*(?:no|number|id)?', 'systmone[ \\t]*(?:no|number|id)?', 'mosaic[ \\t]*(?:no|number|id)?',
+    'rio[ \\t]*(?:no|number|id)', 'nhs[ \\t]*(?:no|number|num)\\.?', 'chi[ \\t]*(?:no|number)?', 'h[ \\t]*&[ \\t]*c[ \\t]*(?:no|number)?',
+    'health[ \\t]+(?:and|&)[ \\t]+care[ \\t]*(?:no|number)', 'passport[ \\t]*(?:no|number)', 'driving[ \\t]+licen[cs]e[ \\t]*(?:no|number)?',
+    'account[ \\t]*(?:no|number)', 'policy[ \\t]*(?:no|number)', 'membership[ \\t]*(?:no|number)', 'id[ \\t]*(?:no|number)?'
+  ],
+  niLabels: ['ni[ \\t]*(?:no|number|num)\\.?', 'national[ \\t]+insurance(?:[ \\t]*(?:no|number))?', 'nino'],
+  postcodeLabels: ['post[ \\t]*code'],
+
+  /* Words before a 10-digit number that mean it is an NHS/CHI/H&C number. */
+  nhsCuePattern: '(?:NHS|CHI|H[ \\t]*&[ \\t]*C|Health[ \\t]+(?:and|&)[ \\t]+Care)',
+
+  /* Words before a number that mean it is a phone number. */
+  phoneCuePattern: '(?:tel|telephone|phone|ph|mob|mobile|cell|fax|landline|home|work|contact|call|ring|switchboard|whatsapp|text)',
+
+  /* ---------------------------------------------------------------- DATES */
+
+  /* Words before a date that make it a date of birth. */
+  dobCuePattern: '(?:\\bDOB|\\bDoB|\\bD\\.[ \\t]?O\\.[ \\t]?B\\b\\.?|\\bdate[ \\t]+of[ \\t]+birth|\\bbirth[ \\t]*date|\\bborn(?:[ \\t]+on)?|\\bd\\/o\\/b)',
+
+  /* Units after a number pattern that mean it is a dose, not a date ("5-10-20 mg"). */
+  doseUnits: 'mg mcg µg ug g kg ml mL l mmol mmHg units unit iu tablets tablet tabs caps puffs drops % x times hours hrs days weeks'
+};
+
+
+/* =========================================================================
+   SECTION 2 — DETECTION ENGINE
+   Finds every identifier as a character range in the ORIGINAL text,
+   resolves overlaps (longer / more specific wins), groups the same person or
+   value together, then builds the output in a single pass. Placeholders are
+   never re-scanned, so one pattern can never break another.
+   (Avoids regex look-behind so it also runs on older Safari.)
+   ========================================================================= */
+const DeID = (function () {
+  'use strict';
+
+  /* ---------- small helpers ---------- */
+  const listOf = s => s.trim().split(/\s+/).filter(Boolean);
+  const lowerSet = s => new Set(listOf(s).map(w => w.toLowerCase()));
+  const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const RX_ALNUM = /[\p{L}\p{N}]/u;
+  const isAlnum = ch => !!ch && RX_ALNUM.test(ch);
+  const norm = s => s.toLowerCase().replace(/[\s ]+/g, ' ')
+    .replace(/^[\s.,;:!?()[\]"'“”‘’]+|[\s.,;:!?()[\]"'“”‘’]+$/g, '').trim();
+  const lineStart = (t, i) => t.lastIndexOf('\n', i - 1) + 1;
+  const lineEnd = (t, i) => { const j = t.indexOf('\n', i); return j < 0 ? t.length : j; };
+  const phraseRe = arr => arr.slice().sort((a, b) => b.length - a.length)
+    .map(p => escRe(p).replace(/ /g, '[ \\t]+')).join('|');
+
+  /* ---------- lexicon built from CONFIG ---------- */
+  const LEX = {
+    first: lowerSet(CONFIG.firstNames),
+    sur: lowerSet(CONFIG.surnames),
+    amb: lowerSet(CONFIG.ambiguousNames),
+    stop: lowerSet(CONFIG.notNames),
+    abbr: new Set(listOf(CONFIG.medicalAbbreviations)),
+    titles: new Set(listOf(CONFIG.titles)),
+    rel: lowerSet(CONFIG.relationships),
+    particles: lowerSet(CONFIG.nameParticles),
+    epon: lowerSet(CONFIG.eponyms),
+    eponStand: lowerSet(CONFIG.eponymsStandalone),
+    eponAlways: lowerSet(CONFIG.eponymsAlways),
+    eponCond: lowerSet(CONFIG.eponymConditionWords),
+    place: lowerSet(CONFIG.placeWords),
+    notStreet: lowerSet(CONFIG.notStreetWords),
+    doseUnits: listOf(CONFIG.doseUnits)
+  };
+  LEX.abbrUpper = new Set([...LEX.abbr].map(a => a.toUpperCase()));
+  LEX.titlesLower = new Set([...LEX.titles].map(a => a.toLowerCase()));
+  const isNameWord = low => LEX.first.has(low) || LEX.sur.has(low);
+  const isStrongName = low => isNameWord(low) && !LEX.amb.has(low);
+
+  /* ---------- regular expressions ---------- */
+  const W = "\\p{Lu}(?:['’]\\p{Lu})?[\\p{Ll}\\p{M}]+(?:\\p{Lu}[\\p{Ll}\\p{M}]+)*";
+  const RX_CAPWORD = new RegExp('^(?:(?:al|el|Al|El|bin|ibn|Abu|abu|Abd|ul)-)?' + W + '(?:-' + W + ')*$', 'u');
+  const RX_CAPS = /^\p{Lu}(?:['’]?\p{Lu})+(?:-\p{Lu}(?:['’]?\p{Lu})+)*$/u;
+  const RX_TOKEN = /[\p{L}\p{M}]+(?:['’\-][\p{L}\p{M}]+)*['’]?|\p{N}+|\S/gu;
+  const MONTHS = { jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4, may: 5, jun: 6, june: 6,
+    jul: 7, july: 7, aug: 8, august: 8, sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12 };
+  const MON = 'january|february|march|april|may|june|july|august|september|october|november|december|sept|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec';
+  const RX_DOB_BEFORE = new RegExp(CONFIG.dobCuePattern + '[\\s:.\\-–—=()]*$', 'i');
+  const RX_DOB_AFTER = /^[\s(]*(?:DOB|D\.O\.B|date of birth)/i;
+  const RX_NHS_CUE = new RegExp(CONFIG.nhsCuePattern + '[^\\n]{0,18}$', 'i');
+  const RX_PHONE_CUE = new RegExp('\\b' + CONFIG.phoneCuePattern + '\\b[^\\n]{0,18}$', 'i');
+  const RX_DOSE_AFTER = new RegExp('^[ \\t]*(?:' + LEX.doseUnits.map(escRe).join('|') + ')(?![\\p{L}])', 'iu');
+
+  /* Run a global regex, skipping matches that start or end inside a word. */
+  function scan(re, text, fn) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(text))) {
+      if (!m[0]) { re.lastIndex++; continue; }
+      const s = m.index, e = s + m[0].length;
+      if ((isAlnum(text[s]) && isAlnum(text[s - 1])) || (isAlnum(text[e - 1]) && isAlnum(text[e]))) {
+        re.lastIndex = s + 1; continue;
+      }
+      fn(m, s, e);
+    }
+  }
+
+  /* ---------- tokeniser (used for names) ---------- */
+  function tokenize(text) {
+    const out = [];
+    let m, prevEnd = 0;
+    RX_TOKEN.lastIndex = 0;
+    while ((m = RX_TOKEN.exec(text))) {
+      const t = m[0], s = m.index, gap = text.slice(prevEnd, s);
+      let core = t, poss = false;
+      if (/['’][sS]$/.test(core) && core.length > 3) { core = core.slice(0, -2); poss = true; }
+      else if (/['’]$/.test(core) && core.length > 2) { core = core.slice(0, -1); poss = true; }
+      let kind;
+      if (RX_CAPWORD.test(core)) kind = 'word';
+      else if (/^\p{Lu}$/u.test(core)) kind = 'initial';
+      else if (RX_CAPS.test(core)) kind = 'caps';
+      else if (/^\p{Ll}/u.test(core)) kind = 'lower';
+      else if (/^\p{N}/u.test(core)) kind = 'num';
+      else if (/^[\p{L}]/u.test(core)) kind = 'other';
+      else kind = 'punct';
+      out.push({ t, core, low: core.toLowerCase(), s, e: s + core.length, end: s + t.length, poss, kind,
+        nl: gap.indexOf('\n') >= 0, gap: gap.length });
+      prevEnd = s + t.length;
+    }
+    return out;
+  }
+  function tokenAt(T, pos) { // first token starting at or after pos
+    let lo = 0, hi = T.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (T[mid].s < pos) lo = mid + 1; else hi = mid; }
+    return lo;
+  }
+  const isWordTok = tk => tk && (tk.kind === 'word' || tk.kind === 'caps');
+  const isTitleTok = tk => tk && LEX.titles.has(tk.core);
+  function sentenceStart(T, i) {
+    if (i === 0 || T[i].nl) return true;
+    const p = T[i - 1];
+    return p.kind === 'punct' && /[.!?:;•*\-–—"“(]/.test(p.t);
+  }
+  function isStopTok(tk, ctx, strong) {
+    if (LEX.stop.has(tk.low) || LEX.titlesLower.has(tk.low) || LEX.rel.has(tk.low)) return true;
+    if (LEX.abbr.has(tk.core) || (tk.kind === 'caps' && LEX.abbrUpper.has(tk.core))) return true;
+    if (LEX.place.has(tk.low) && !(strong && isNameWord(tk.low))) return true;
+    return false;
+  }
+
+  /* Read a run of name tokens starting at token i (same line, single spaces). */
+  function readSeq(T, i, ctx, opt) {
+    opt = opt || {};
+    const max = opt.maxWords || 3, items = [];
+    let j = i, words = 0, afterDot = false;
+    while (j < T.length && words < max) {
+      const tk = T[j];
+      if (items.length) {
+        if (tk.nl || tk.gap > 3) break;
+        if (tk.gap === 0 && !afterDot) break;
+      }
+      afterDot = false;
+      if (tk.kind === 'initial') {
+        let k = j + 1, dot = false;
+        if (T[k] && T[k].t === '.' && T[k].gap === 0) { dot = true; k++; }
+        const nx = T[k];
+        if (!nx || nx.nl || !(nx.kind === 'initial' || isWordTok(nx))) break;
+        if (!dot && nx.gap === 0) break;
+        if (!dot && !opt.strong && nx.kind === 'initial') break;
+        items.push({ tk, role: 'initial', dot });
+        j = k; afterDot = dot; continue;
+      }
+      if (tk.kind === 'lower' && items.length && LEX.particles.has(tk.low) && isWordTok(T[j + 1]) && !T[j + 1].nl) {
+        items.push({ tk, role: 'particle' }); j++; continue;
+      }
+      if (tk.kind === 'word' || tk.kind === 'caps') {
+        if (isStopTok(tk, ctx, opt.strong)) break;
+        if (tk.kind === 'caps' && tk.core.length < 2) break;
+        items.push({ tk, role: 'word' }); words++; j++;
+        if (tk.poss) break;
+        continue;
+      }
+      break;
+    }
+    while (items.length && items[items.length - 1].role !== 'word') items.pop();
+    if (!words || !items.length) return null;
+    const last = items[items.length - 1].tk;
+    return { items, start: items[0].tk.s, end: last.e, next: tokenAt(T, last.end),
+      words: items.filter(x => x.role === 'word').map(x => x.tk) };
+  }
+
+  /* Is the word at token i used as a medical eponym ("Parkinson's disease")? */
+  function eponymAt(T, i) {
+    const tk = T[i];
+    if (!tk || !LEX.epon.has(tk.low)) return false;
+    if (LEX.eponAlways.has(tk.low)) return true;
+    let k = i + 1;
+    if (T[k] && T[k].t === '-' && T[k].gap === 0) k++;          // "Down-syndrome"
+    const nx = T[k];
+    if (nx && !nx.nl && LEX.eponCond.has(nx.low)) return true;   // "Barrett's oesophagus", "Apgar score"
+    if (nx && !nx.nl && nx.kind === 'word' && LEX.epon.has(nx.low) && T[k + 1] && LEX.eponCond.has(T[k + 1].low)) return true; // "Guillain Barré syndrome"
+    if (tk.poss && LEX.eponStand.has(tk.low)) return true;       // "Alzheimer's"
+    return false;
+  }
+
+  /* ---------- candidate bookkeeping ---------- */
+  const PRIO = { CUSTOM: 10, EMAIL: 9, NHS: 8, NINO: 8, PHONE: 7, DOB: 7, POSTCODE: 7, DATE: 6, RECORD: 5, ADDRESS: 5, NAME: 4 };
+  function makeAdder(list, text) {
+    return function add(s, e, type, extra) {
+      while (e > s && /\s/.test(text[e - 1])) e--;
+      while (s < e && /\s/.test(text[s])) s++;
+      if (e <= s) return null;
+      const c = Object.assign({ s, e, type, text: text.slice(s, e), prio: PRIO[type] || 1 }, extra || {});
+      if (type === 'NAME') c.prio += c.strength === 'strong' ? 0.6 : c.strength === 'medium' ? 0.4 : 0;
+      list.push(c);
+      return c;
+    };
+  }
+
+  /* ======================= NUMBERS AND CODES ======================= */
+
+  function nhsChecksumOK(d) {
+    if (!/^\d{10}$/.test(d)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += (+d[i]) * (10 - i);
+    let c = 11 - (sum % 11);
+    if (c === 11) c = 0;
+    return c !== 10 && c === +d[9];
+  }
+
+  function detectNHS(text, add) {
+    scan(/\d{3}([ \-]?)\d{3}\1\d{4}/g, text, (m, s, e) => {
+      const digits = m[0].replace(/\D/g, '');
+      const before = text.slice(Math.max(0, s - 32), s);
+      const nhsCue = RX_NHS_CUE.test(before);
+      const phoneCue = RX_PHONE_CUE.test(before);
+      const valid = nhsChecksumOK(digits);
+      if (/[+(]\s*$/.test(before)) return;                                    // part of "+44 …" or "(0…"
+      if (digits[0] === '0' && !nhsCue && (phoneCue || (!valid && !m[1]))) return; // really a phone number
+      if (phoneCue && !nhsCue && !valid) return;
+      add(s, e, 'NHS', { key: digits, flag: valid ? null :
+        'Fails the NHS number check (Modulus 11) – possibly a typo, or another kind of number. Redacted to be safe; please check.' });
+    });
+  }
+
+  function phoneKey(raw) {
+    let r = raw.replace(/\(0\)/g, '');
+    let d = r.replace(/\D/g, '');
+    if (/^\s*\+/.test(raw)) { if (d.startsWith('44')) d = '0' + d.slice(2); else d = '+' + d; }
+    else if (d.startsWith('0044')) d = '0' + d.slice(4);
+    return d;
+  }
+  function detectPhones(text, add) {
+    const before = s => text.slice(Math.max(0, s - 32), s);
+    scan(/\+[ \t]?\d{1,3}(?:[ \t\-.]?\(0\))?(?:[ \t\-.]?\(?\d{1,5}\)?){1,6}/g, text, (m, s, e) => {
+      let str = m[0];
+      while (str.replace(/\(0\)/g, '').replace(/\D/g, '').length > 15) str = str.replace(/[ \t\-.]?\(?\d{1,5}\)?$/, '');
+      const n = str.replace(/\(0\)/g, '').replace(/\D/g, '').length;
+      if (n < 8) return;
+      add(s, s + str.length, 'PHONE', { key: phoneKey(str) });
+    });
+    scan(/(?:\(0\d{2,4}\)|0\d{2,4})[ \t\-.]?\d{3,4}[ \t\-.]?\d{3,4}/g, text, (m, s, e) => {
+      const d = m[0].replace(/\D/g, '');
+      if (d.length < 10 || d.length > 11 || !/^0[1235789]/.test(d)) return;
+      if (text[s - 1] === '+' || /\d[ \t]*$/.test(before(s).slice(-2))) return;
+      if (d.length === 10 && !/[\s()\-.]/.test(m[0]) && RX_NHS_CUE.test(before(s))) return; // NHS number, not phone
+      add(s, e, 'PHONE', { key: phoneKey(m[0]) });
+    });
+  }
+
+  function detectEmails(text, add) {
+    scan(/[A-Za-z0-9._%+'\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}/g, text, (m, s, e) => {
+      add(s, e, 'EMAIL', { key: m[0].toLowerCase() });
+    });
+  }
+
+  const POSTCODE_SRC = '(?:(?:[A-Z]{1,2}\\d[A-Z\\d]?|GIR)[ \\t]?\\d[ABD-HJLNP-UW-Z]{2}|ZZ99[ \\t]?\\d[A-Z]{2})';
+  function detectPostcodes(text, add) {
+    scan(new RegExp(POSTCODE_SRC, 'g'), text, (m, s, e) => {
+      add(s, e, 'POSTCODE', { key: m[0].replace(/\s/g, '').toUpperCase() });
+    });
+  }
+
+  function detectNINO(text, add) {
+    scan(/[A-Z]{2}[ \t]?\d{2}[ \t]?\d{2}[ \t]?\d{2}[ \t]?[A-D]/g, text, (m, s, e) => {
+      add(s, e, 'NINO', { key: m[0].replace(/\s/g, '').toUpperCase() });
+    });
+  }
+
+  /* Values after labels such as "Hospital no:", "MRN", "NI number:", "Postcode:". */
+  function detectLabelledValues(text, add) {
+    const groups = [
+      { type: 'RECORD', labels: CONFIG.recordLabels },
+      { type: 'NINO', labels: CONFIG.niLabels },
+      { type: 'POSTCODE', labels: CONFIG.postcodeLabels }
+    ];
+    for (const g of groups) {
+      const re = new RegExp('(?:' + g.labels.join('|') + ')[ \\t]*[:#=\\-–.]?[ \\t]*', 'gi');
+      scan(re, text, (m, s, e) => {
+        if (e < text.length && text[e] === '\n') return;
+        const rest = text.slice(e, Math.min(lineEnd(text, e), e + 48));
+        if (g.type === 'POSTCODE') {
+          const pm = /^[A-Za-z]{1,2}\d[A-Za-z\d]?[ \t]?\d[A-Za-z]{2}(?![\p{L}\p{N}])/u.exec(rest);
+          if (pm) add(e, e + pm[0].length, 'POSTCODE', { key: pm[0].replace(/\s/g, '').toUpperCase() });
+          return;
+        }
+        if (g.type === 'NINO') {
+          const nm = /^[A-Za-z]{2}[ \t]?\d{2}[ \t]?\d{2}[ \t]?\d{2}(?:[ \t]?[A-Da-d])?(?![\p{L}\p{N}])/u.exec(rest);
+          if (nm) add(e, e + nm[0].length, 'NINO', { key: nm[0].replace(/\s/g, '').toUpperCase() });
+          return;
+        }
+        // RECORD: take space-separated chunks while they look like parts of an ID
+        const chunks = rest.split(/([ \t]+)/);
+        let val = '', ok = false;
+        for (let i = 0; i < chunks.length; i += 2) {
+          const c = chunks[i].replace(/[.,;:)]+$/, '');
+          if (!c || !/^[A-Za-z0-9][A-Za-z0-9\/\-.]*$/.test(c)) break;
+          const hasDigit = /\d/.test(c);
+          if (!hasDigit && !(val === '' && /^[A-Z]{1,5}$/.test(c) && /\d/.test(chunks[i + 2] || ''))) break;
+          if (i > 0 && chunks[i - 1].length > 1) break;
+          val += (val ? chunks[i - 1] : '') + c;
+          if (hasDigit) ok = true;
+          if (c !== chunks[i]) break;
+        }
+        if (ok && val.length >= 3) add(e, e + val.length, g.type, { key: val.replace(/[\s\-\/.]/g, '').toUpperCase() });
+      });
+    }
+  }
+
+  /* =============================== DATES =============================== */
+
+  function mkDate(d, mo, y) {
+    d = +d; mo = +mo;
+    if (y !== undefined && y !== null && y !== '') {
+      y = String(y).replace("'", '');
+      if (y.length === 2) {
+        const yy = +y, cur = new Date().getFullYear() % 100;
+        y = yy <= cur + 1 ? 2000 + yy : 1900 + yy;
+      } else y = +y;
+      if (y < 1880 || y > 2100) return null;
+    } else y = null;
+    if (mo < 1 || mo > 12 || d < 1) return null;
+    const dim = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+    if (d > dim) return null;
+    const p = n => String(n).padStart(2, '0');
+    return { iso: (y ? y : '----') + '-' + p(mo) + '-' + p(d), year: y };
+  }
+
+  function detectDates(text, add) {
+    const push = (s, e, dt) => {
+      if (!dt) return;
+      const before = text.slice(Math.max(0, s - 40), s);
+      const after = text.slice(e, e + 16);
+      const dob = RX_DOB_BEFORE.test(before) || RX_DOB_AFTER.test(after);
+      add(s, e, 'DATE', { key: dt.iso, year: dt.year, dob });
+    };
+    const numericGuard = (s, e) => {
+      const pre = text.slice(Math.max(0, s - 2), s), post = text.slice(e, e + 12);
+      if (/\d[\/.\-]$/.test(pre) || /[\/.:]$/.test(pre) && /\d/.test(pre[0] || '')) return false;
+      if (/^[\/.\-]\d/.test(post) || /^:\d/.test(post)) return false;
+      if (RX_DOSE_AFTER.test(post)) return false;
+      return true;
+    };
+    // 03/07/1985, 3-7-85, 03.07.1985
+    scan(/(\d{1,2})([\/.\-])(\d{1,2})\2(\d{4}|\d{2})/g, text, (m, s, e) => {
+      if (!numericGuard(s, e)) return;
+      if (m[2] === '-' && /\b(?:range|dose|doses|between|titrate|from|increase|reduce|x)[ \t]*$/i.test(text.slice(Math.max(0, s - 12), s))) return;
+      let d = m[1], mo = m[3];
+      if (+mo > 12 && +d <= 12 && m[2] === '/') { const t = d; d = mo; mo = t; }
+      push(s, e, mkDate(d, mo, m[4]));
+    });
+    // 1985-07-03
+    scan(/(\d{4})([\/.\-])(\d{1,2})\2(\d{1,2})/g, text, (m, s, e) => {
+      if (!numericGuard(s, e)) return;
+      push(s, e, mkDate(m[4], m[3], m[1]));
+    });
+    // 3 July 1985, 3rd Jul 1985, 03-JUL-85, 3 July
+    const reDMY = new RegExp('(\\d{1,2})(?:st|nd|rd|th)?(?:[ \\t]+of)?[ \\t\\-\\/.,]*(' + MON + ')(?![\\p{L}])\\.?' +
+      "(?:,?[ \\t\\-\\/.]*(\\d{4})|[ \\t\\-\\/.]+('\\d{2}|\\d{2}))?(?![\\p{L}\\p{N}])(?![:.\\/\\-]\\d)", 'giu');
+    scan(reDMY, text, (m, s, e) => {
+      const monTxt = m[2];
+      if (/^\p{Ll}/u.test(monTxt) && !m[3] && !m[4]) return;                 // "3 may be" is not a date
+      if (/\d[\/.\-]$/.test(text.slice(Math.max(0, s - 2), s))) return;
+      push(s, e, mkDate(m[1], MONTHS[monTxt.toLowerCase()], m[3] || m[4]));
+    });
+    // July 3 1985, July 3rd, 1985
+    const reMDY = new RegExp('(' + MON + ')(?![\\p{L}])\\.?[ \\t]+(\\d{1,2})(st|nd|rd|th)?(?![\\p{N}])(?:,?[ \\t]+(\\d{4})(?![\\p{L}\\p{N}]))?', 'giu');
+    scan(reMDY, text, (m, s, e) => {
+      if (!m[4] && !m[3]) return;
+      if (/^\p{Ll}/u.test(m[1]) && !m[4]) return;
+      push(s, e, mkDate(m[2], MONTHS[m[1].toLowerCase()], m[4]));
+    });
+  }
+
+  /* ============================= ADDRESSES ============================= */
+
+  const WORDCAP = "[\\p{Lu}][\\p{L}\\p{M}'’\\-]*";
+  function detectAddresses(text, add, ctx) {
+    const suf = listOf(CONFIG.streetSuffixes), sufAb = listOf(CONFIG.streetSuffixAbbreviations);
+    const bld = listOf(CONFIG.buildingWords).join('|');
+    const num = '\\d{1,4}[A-Za-z]?(?:[ \\t]?[\\-–\\/][ \\t]?\\d{1,4}[A-Za-z]?)?,?[ \\t]+';
+    const words = '(?:(?:' + WORDCAP + '|of|the|upon|on|de|la|le)[ \\t]+){1,4}';
+    const reFull = new RegExp(num + words + '(?:' + suf.join('|') + ')(?![\\p{L}\\p{N}])', 'gu');
+    const reAbbr = new RegExp(num + words + '(?:' + sufAb.join('|') + ')\\.?(?=[ \\t]*(?:[,\\n\\r]|$))', 'gu');
+    const reLeft = new RegExp('(?:(?:Flat|Apartment|Apt|Unit|Room|Suite|Floor|Maisonette)\\.?[ \\t]*\\d+[A-Za-z]?|' +
+      WORDCAP + '(?:[ \\t]+' + WORDCAP + '){0,3}[ \\t]+(?:' + bld + '))[ \\t]*,?[ \\t]*$', 'u');
+    const reRight = new RegExp('^[ \\t]*,[ \\t]*(' + WORDCAP + '(?![\\p{L}\\p{N}])(?:[ \\t]+(?:' + WORDCAP +
+      '|upon|on|under|in|by|le|de|the)(?![\\p{L}\\p{N}])){0,3})', 'u');
+    const rePostAfter = new RegExp('^[ \\t,]+' + POSTCODE_SRC + '(?![\\p{L}\\p{N}])');
+    const reTownBeforePost = new RegExp('^[ \\t]+(' + WORDCAP + '(?:[ \\t]+' + WORDCAP + '){0,2})(?=[ \\t,]+' + POSTCODE_SRC + ')', 'u');
+
+    const badWords = str => (str.match(new RegExp(WORDCAP, 'gu')) || []).some(w =>
+      LEX.notStreet.has(w.toLowerCase()) || LEX.titlesLower.has(w.toLowerCase()));
+    const streetLines = new Set();
+
+    const handle = (m, s, e) => {
+      if (badWords(m[0])) return;
+      let ls = lineStart(text, s);
+      // extend left over "Flat 3, Willow Court, "
+      for (let k = 0; k < 3; k++) {
+        const lm = reLeft.exec(text.slice(ls, s));
+        if (!lm || !lm[0].trim()) break;
+        s = ls + lm.index;
+      }
+      // extend right over ", Oakford, Devon" (stops before a postcode)
+      for (let k = 0; k < 3; k++) {
+        const rest = text.slice(e, lineEnd(text, e));
+        const rm = reRight.exec(rest) || reTownBeforePost.exec(rest);
+        if (!rm) break;
+        const seg = rm[1];
+        const segToks = seg.split(/[ \t]+/);
+        if (segToks.some(w => LEX.stop.has(w.toLowerCase()) || LEX.titlesLower.has(w.toLowerCase()) || LEX.abbr.has(w))) break;
+        const after = rest.slice(rm[0].length);
+        if (!(/^[ \t]*(?:[,.;)]|$)/.test(after) || rePostAfter.test(after))) break;
+        e = e + rm[0].length;
+      }
+      streetLines.add(lineStart(text, s));
+      add(s, e, 'ADDRESS', { key: norm(text.slice(s, e)), method: 'street' });
+    };
+    scan(reFull, text, handle);
+    scan(reAbbr, text, handle);
+
+    /* "Address:" label — rest of the line plus the following address lines */
+    const reLabel = new RegExp('(?:' + CONFIG.addressLabelPattern + ')[ \\t]*[:\\-–][ \\t]*', 'gi');
+    const reCut = /(?:[ \t]{3,}|\t|[|;]|\b(?:Tel|Telephone|Phone|Mob|Mobile|Email|E-mail|DOB|D\.O\.B|NHS|MRN|Hospital)\b)/i;
+    const reOtherLabel = /^[ \t]*[\p{L}][\p{L} .'’\/&()]{0,30}:/u;
+    const addLine = (ls, le) => {
+      let seg = text.slice(ls, le);
+      const cut = reCut.exec(seg);
+      if (cut && cut.index > 0) seg = seg.slice(0, cut.index);
+      const pc = new RegExp(POSTCODE_SRC).exec(seg);
+      if (pc) seg = seg.slice(0, pc.index);
+      seg = seg.replace(/[\s,]+$/, '');
+      if (seg.trim().length >= 2) add(ls, ls + seg.length, 'ADDRESS', { key: norm(seg), method: 'label' });
+    };
+    scan(reLabel, text, (m, s, e) => {
+      let pos = e;
+      let le = lineEnd(text, pos);
+      let lines = 0;
+      if (text.slice(pos, le).trim()) { addLine(pos, le); lines++; }
+      pos = le + 1;
+      while (pos < text.length && lines < 6) {
+        le = lineEnd(text, pos);
+        const line = text.slice(pos, le);
+        if (!line.trim() || line.length > 70 || reOtherLabel.test(line) || /^\s*[\p{Lu}][\p{Ll}]+[ \t]+(?:Mr|Mrs|Ms|Dr)\b/u.test(line)) break;
+        addLine(pos, le); lines++;
+        pos = le + 1;
+      }
+    });
+
+    /* Address blocks: short capitalised lines next to a street line or above a postcode */
+    const org = /\b(?:Surgery|Hospital|Practice|Centre|Center|Clinic|Trust|NHS|Department|Service|Services|Unit|Ward|Health|Medical|Team|Council|University|School|Pharmacy|Group|Foundation|Hospice)\b/;
+    const shortCap = new RegExp('^[ \\t]*' + WORDCAP + '(?:[ \\t,]+(?:' + WORDCAP + '|upon|on|under|in|by|le|de|the|of|and|&))*[ \\t,]*$', 'u');
+    const isTownLine = line => {
+      const t = line.trim();
+      if (!t || t.length > 40 || !shortCap.test(line) || org.test(line)) return false;
+      const ws = t.replace(/,/g, ' ').split(/\s+/).filter(w => /^\p{Lu}/u.test(w));
+      if (ws.length > 4) return false;
+      return !ws.some(w => {
+        const lw = w.replace(/[.,]$/, '').toLowerCase();
+        return LEX.stop.has(lw) || LEX.titlesLower.has(lw) || LEX.abbr.has(w) || isStrongName(lw);
+      });
+    };
+    const lineStarts = [0];
+    for (let i = 0; i < text.length; i++) if (text[i] === '\n') lineStarts.push(i + 1);
+    const lineOf = pos => { let lo = 0, hi = lineStarts.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (lineStarts[mid] <= pos) lo = mid; else hi = mid - 1; } return lo; };
+    const lineText = n => text.slice(lineStarts[n], lineEnd(text, lineStarts[n]));
+    const addTown = n => { const ls = lineStarts[n], line = lineText(n); const a = ls + line.search(/\S/); addLine(a, ls + line.length); };
+    const hasStreet = n => streetLines.has(lineStarts[n]);
+    // walk back from each postcode
+    scan(new RegExp(POSTCODE_SRC, 'g'), text, (m, s) => {
+      const n = lineOf(s);
+      const prefix = text.slice(lineStarts[n], s);
+      if (prefix.trim() && isTownLine(prefix.replace(/[\s,]+$/, ''))) addLine(lineStarts[n] + prefix.search(/\S/), s);
+      if (prefix.trim() && !isTownLine(prefix.replace(/[\s,]+$/, '')) && !hasStreet(n)) return;
+      for (let k = n - 1, c = 0; k >= 0 && c < 4; k--, c++) {
+        const line = lineText(k);
+        if (!line.trim()) break;
+        if (hasStreet(k)) continue;
+        if (!isTownLine(line)) break;
+        addTown(k);
+      }
+    });
+    // walk forward from each street line
+    streetLines.forEach(ls => {
+      const n = lineOf(ls);
+      for (let k = n + 1, c = 0; k < lineStarts.length && c < 3; k++, c++) {
+        const line = lineText(k);
+        if (!line.trim() || new RegExp('^[ \\t]*' + POSTCODE_SRC).test(line) || hasStreet(k)) break;
+        if (!isTownLine(line)) break;
+        addTown(k);
+      }
+    });
+  }
+
+  /* =============================== NAMES =============================== */
+
+  function detectNames(text, T, add, ctx) {
+    const cands = [];
+    const addName = (s, e, strength, method, extra) => {
+      const c = add(s, e, 'NAME', Object.assign({ strength, method }, extra || {}));
+      if (c) cands.push(c);
+    };
+
+    // 1. Title + name: "Mr Smith", "Dr A. Patel", "Mrs Jane DOE"
+    for (let i = 0; i < T.length; i++) {
+      const tk = T[i];
+      if (!isTitleTok(tk)) continue;
+      if (isAlnum(text[tk.s - 1])) continue;
+      let j = i + 1;
+      if (T[j] && T[j].t === '.' && T[j].gap === 0) j++;
+      if (!T[j] || T[j].nl) continue;
+      const seq = readSeq(T, j, ctx, { maxWords: 3, strong: true });
+      if (!seq) continue;
+      addName(tk.s, seq.end, 'strong', 'title');
+    }
+
+    // 2. Labels: "Name:", "Patient:", "Next of kin:", "Dear", "Seen by"…
+    const labelRes = [
+      { re: new RegExp('(?:' + phraseRe(CONFIG.nameLabelsWithColon) + ')[ \\t]*(?::|[ \\t]-[ \\t]|[ \\t]?[–—][ \\t]?)[ \\t]*\\n?', 'gi'), colon: true },
+      { re: new RegExp('(?:' + phraseRe(CONFIG.nameLabelsFree) + ')[ \\t]*[:,]?[ \\t]*', 'gi'), colon: false }
+    ];
+    for (const L of labelRes) {
+      scan(L.re, text, (m, s, e) => {
+        if (/^[\p{Lu}]/u.test(m[0]) === false && L.colon && /^(?:to|from)/i.test(m[0]) && !/^(?:To|From|TO|FROM)/.test(m[0])) return;
+        let j = tokenAt(T, e);
+        const tk = T[j];
+        if (!tk) return;
+        if (tk.nl && !(L.colon && /\n$/.test(m[0]))) return;
+        if (isTitleTok(tk)) return;                              // handled by the title rule
+        const single = /surname|forename|first name|last name|family name|given name|middle name/i.test(m[0]);
+        // "SMITH, John" after a label
+        if (isWordTok(tk) && T[j + 1] && T[j + 1].t === ',' && T[j + 1].gap === 0 && isWordTok(T[j + 2]) && !T[j + 2].nl && !isStopTok(tk, ctx, true)) {
+          const s2 = readSeq(T, j + 2, ctx, { maxWords: 3, strong: true });
+          if (s2) { addName(tk.s, s2.end, 'strong', 'label', { reversed: true }); return; }
+        }
+        const seq = readSeq(T, j, ctx, { maxWords: single ? 2 : 4, strong: true, crossNl: true });
+        if (!seq) return;
+        const nx = T[seq.next];
+        if (nx && !nx.nl && isWordTok(nx) && LEX.place.has(nx.low)) return; // "GP: Riverside Surgery"
+        addName(seq.start, seq.end, 'strong', 'label');
+      });
+    }
+
+    // 3. Sign-offs: the name on the first line after "Yours sincerely" etc.
+    const reSign = new RegExp('^[ \\t]*(?:' + phraseRe(CONFIG.signOffs) + ')[ \\t]*[,.!]?[ \\t]*$', 'gim');
+    scan(reSign, text, (m, s, e) => {
+      let pos = e + 1;
+      for (let k = 0; k < 6 && pos < text.length; k++) {
+        const le = lineEnd(text, pos), line = text.slice(pos, le);
+        if (!line.trim() || /^\s*(?:\[.*\]|\(.*\)|p\.?p\.?|pp|signed|electronically signed|e-signed|dictated.*|signature)\s*$/i.test(line)) { pos = le + 1; continue; }
+        const j = tokenAt(T, pos);
+        if (T[j] && isTitleTok(T[j])) break;                    // title rule covers it
+        const seq = readSeq(T, j, ctx, { maxWords: 4, strong: true, crossNl: true });
+        if (seq && seq.start < le) addName(seq.start, seq.end, 'strong', 'sign-off');
+        break;
+      }
+    });
+
+    // 4. Relationship words: "her daughter Sarah", "husband Tom"
+    for (let i = 0; i < T.length; i++) {
+      const tk = T[i];
+      if (!(tk.kind === 'lower' || tk.kind === 'word') || !LEX.rel.has(tk.low) || tk.poss) continue;
+      let j = i + 1;
+      while (T[j] && !T[j].nl && (T[j].t === ',' || T[j].t === '(' || T[j].t === ':')) j++;
+      const nx = T[j];
+      if (!nx || nx.nl || isTitleTok(nx) || !isWordTok(nx)) continue;
+      const seq = readSeq(T, j, ctx, { maxWords: 3, strong: true });
+      if (seq) addName(seq.start, seq.end, 'strong', 'relationship');
+    }
+
+    // 5. Formats and the built-in name lists (general pass over capitalised runs)
+    const relAfter = k => {
+      let j = k;
+      while (T[j] && !T[j].nl && (T[j].t === ',' || T[j].t === '(' || T[j].t === '-' || T[j].t === '–')) j++;
+      return T[j] && !T[j].nl && j > k && LEX.rel.has(T[j].low);
+    };
+    let i = 0;
+    while (i < T.length) {
+      const tk = T[i];
+      if (!(tk.kind === 'word' || tk.kind === 'caps' || tk.kind === 'initial')) { i++; continue; }
+      // "SMITH, John" / "Okafor, Grace"
+      if (isWordTok(tk) && !tk.poss && T[i + 1] && T[i + 1].t === ',' && T[i + 1].gap === 0 && T[i + 2] && !T[i + 2].nl && isWordTok(T[i + 2]) && !isStopTok(tk, ctx, true)) {
+        const s2 = readSeq(T, i + 2, ctx, { maxWords: 3, strong: true });
+        if (s2) {
+          const f = s2.words[0].low;
+          const ok = (tk.kind === 'caps' && tk.core.length >= 2 && (LEX.sur.has(tk.low) || LEX.first.has(f) || (s2.words[0].kind === 'word' && !LEX.stop.has(f) && s2.words.length >= 1 && isNameWord(f))))
+            || (tk.kind === 'word' && isStrongName(tk.low) && LEX.sur.has(tk.low) && LEX.first.has(f));
+          if (ok) { addName(tk.s, s2.end, 'strong', 'format', { reversed: true }); i = s2.next; continue; }
+        }
+      }
+      const seq = readSeq(T, i, ctx, { maxWords: 4 });
+      if (!seq) { i++; continue; }
+      const i0 = tokenAt(T, seq.start);
+      evaluateRun(seq, i0);
+      i = Math.max(seq.next, i + 1);
+    }
+    function evaluateRun(seq, i0) {
+      const prev = T[i0 - 1], first = T[i0];
+      if (prev && !first.nl && (prev.low === 'the' || prev.core === 'St' || (prev.t === '.' && T[i0 - 2] && T[i0 - 2].core === 'St'))) return;
+      const nx = T[seq.next];
+      if (nx && !nx.nl && isWordTok(nx) && LEX.place.has(nx.low)) return;       // "Victoria Ward", "Beacon Road"
+      const words = seq.words;
+      const firstWordIdx = tokenAt(T, words[0].s);
+      if (eponymAt(T, firstWordIdx)) return;                                     // "Parkinson's disease"
+      if (relAfter(seq.next)) { addName(seq.start, seq.end, 'strong', 'relationship'); return; } // "Sarah (daughter)"
+      const hasInitial = seq.items[0].role === 'initial';
+      const info = words.map(w => ({ w, known: isNameWord(w.low), strong: isStrongName(w.low) }));
+      if (words.length === 1) {
+        const x = info[0];
+        if (hasInitial) {                                                        // "J. Smith", "J Smith"
+          const dotted = seq.items.some(it => it.role === 'initial' && it.dot);
+          const pv = T[i0 - 1];
+          const badPrev = pv && !first.nl && (pv.kind === 'num' || pv.kind === 'caps' || pv.kind === 'initial' || pv.kind === 'word');
+          if (x.known || (dotted && !badPrev && x.w.kind === 'word' && !LEX.stop.has(x.w.low))) addName(seq.start, seq.end, 'strong', 'format');
+          return;
+        }
+        if (x.strong && x.w.core.length >= 2) addName(x.w.s, x.w.e, 'weak', 'list', { lowConf: true });
+        return;
+      }
+      const known = info.filter(x => x.known), strongKnown = info.filter(x => x.strong);
+      if (strongKnown.length >= 1 || known.length >= 2) {
+        let a = 0;
+        if (sentenceStart(T, firstWordIdx) && !info[0].known && !hasInitial) a = 1; // "Visited Sarah Jones"
+        while (a < info.length && !info[a].known && info.slice(a).every(x => !x.known)) a++;
+        if (a >= info.length) return;
+        const start = a === 0 ? seq.start : info[a].w.s;
+        const b = info.length - 1;
+        if (a === b && !info[a].strong) return;
+        addName(start, info[b].w.e, 'medium', 'list');
+        return;
+      }
+      // "Forename SURNAME" with a known forename handled above; "John SMITH" with unknown forename:
+      const lastW = words[words.length - 1];
+      if (lastW.kind === 'caps' && LEX.sur.has(lastW.low)) addName(seq.start, seq.end, 'medium', 'format');
+    }
+
+    // 6. "Always redact" entries that look like people's names
+    for (const c of ctx.customPeople) addName(c.s, c.e, 'strong', 'custom', { entry: c.entry });
+
+  }
+
+  /* Once a name is found, redact every other appearance of it and its parts.
+     Runs after overlaps are resolved, so only names that survived can spread. */
+  function propagateNames(text, T, nameSpans, add) {
+    const parts = new Map();
+    for (const c of nameSpans) {
+      const toks = tokenize(c.text).filter(t => (t.kind === 'word' || t.kind === 'caps') && !LEX.titles.has(t.core) && t.core.length >= 2);
+      const ws = toks.filter(t => !LEX.stop.has(t.low) && !LEX.abbr.has(t.core) && !LEX.abbrUpper.has(t.core)).map(t => t.core);
+      if (!ws.length) continue;
+      if (ws.length >= 2) parts.set(ws.join(' ').toLowerCase(), ws);
+      for (const w of ws) parts.set(w.toLowerCase(), [w]);
+    }
+    const commonAfter = /^[ \t]+(?:you|i|we|be|have|has|not|the|this|that|it|he|she|they|a|an|there|also|well|need|all|your|our|his|her)\b/i;
+    parts.forEach(ws => {
+      const re = new RegExp(ws.map(escRe).join('[ \\t]+'), 'giu');
+      const low = ws.length === 1 ? ws[0].toLowerCase() : null;
+      let m;
+      while ((m = re.exec(text))) {
+        const s = m.index, e = s + m[0].length;
+        if (!/^\p{Lu}/u.test(m[0])) continue;                    // only capitalised or CAPITALS
+        const pc = text[s - 1], nc = text[e];
+        if (isAlnum(pc) || isAlnum(nc)) continue;
+        if ((pc === '-' || pc === "'" || pc === '’') && isAlnum(text[s - 2])) continue;
+        if (nc === '-' && isAlnum(text[e + 1])) continue;
+        if (pc === '@' || (pc === '.' && isAlnum(text[s - 2]))) continue;
+        const ti = tokenAt(T, s);
+        if (low) {
+          if (eponymAt(T, ti)) continue;                          // "Parkinson's disease"
+          const prevTok = T[ti - 1], tk = T[ti];
+          if (prevTok && !tk.nl && prevTok.core === 'St') continue;
+          let k = tokenAt(T, tk.end);
+          const nx = T[k];
+          if (nx && !nx.nl && isWordTok(nx) && LEX.place.has(nx.low)) continue; // "King's College", "Wilson Ward"
+          if (LEX.amb.has(low)) {                                 // everyday words: skip obvious non-name uses
+            const before = text.slice(Math.max(0, s - 14), s), after = text.slice(e, e + 12);
+            if (MONTHS[low] && (/^,?[ \t]+\d{2,4}(?!\d)/.test(after) || /\d(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?$/i.test(before) ||
+              /\b(?:in|since|until|till|by|from|during|early|late|mid|end|of|last|next|this|since)[ \t]+$/i.test(before))) continue;
+            if (sentenceStart(T, ti) && commonAfter.test(after)) continue;
+          }
+        }
+        add(s, e, 'NAME', { strength: 'medium', method: 'repeat' });
+      }
+    });
+  }
+
+  /* Parse a NAME span into first name / surname / initials for grouping. */
+  function parseName(str) {
+    const toks = tokenize(str);
+    let k = 0;
+    while (k < toks.length && (LEX.titles.has(toks[k].core) || toks[k].t === '.')) k++;
+    const rest = toks.slice(k);
+    const hadTitle = k > 0;
+    const commaAt = rest.findIndex(t => t.t === ',');
+    let words, initials = [];
+    let first = null, last = null;
+    const wordToks = arr => arr.filter(t => t.kind === 'word' || t.kind === 'caps').map(t => t.low);
+    rest.forEach(t => { if (t.kind === 'initial') initials.push(t.low); });
+    if (commaAt > 0) {
+      const sur = wordToks(rest.slice(0, commaAt)), fn = wordToks(rest.slice(commaAt + 1));
+      words = sur.concat(fn);
+      last = sur[sur.length - 1] || null; first = fn[0] || null;
+    } else {
+      words = wordToks(rest);
+      if (words.length >= 2) { first = words[0]; last = words[words.length - 1]; }
+      else if (words.length === 1 && (hadTitle || initials.length)) last = words[0];
+    }
+    if (!first && initials.length && !last && words.length === 1) last = words[0];
+    return { first, last, words, initials, hadTitle, single: (!first && !last && words.length === 1) ? words[0] : null };
+  }
+
+  /* Group NAME spans into people so "John Smith", "Mr Smith" and "SMITH, John" match. */
+  function clusterPeople(spans) {
+    const people = [];
+    const names = spans.filter(s => s.type === 'NAME').map(s => Object.assign(s, { pn: parseName(s.text) }));
+    const newPerson = (sp) => { const p = { first: sp.pn.first, last: sp.pn.last, words: new Set(sp.pn.words), mentions: [] }; people.push(p); return p; };
+    const attach = (p, sp) => { p.mentions.push(sp); sp.person = p; sp.pn.words.forEach(w => p.words.add(w)); if (!p.first && sp.pn.first) p.first = sp.pn.first; if (!p.last && sp.pn.last) p.last = sp.pn.last; };
+    const nearest = (cands, sp) => {
+      if (cands.length === 1) return cands[0];
+      let best = null, bestPos = -1;
+      for (const p of cands) for (const m of p.mentions) if (m.s < sp.s && m.s > bestPos) { best = p; bestPos = m.s; }
+      return best || cands[0];
+    };
+    names.filter(s => s.pn.first && s.pn.last).sort((a, b) => a.s - b.s).forEach(sp => {
+      const p = people.find(q => q.last === sp.pn.last && q.first === sp.pn.first);
+      if (p) attach(p, sp); else attach(newPerson(sp), sp);
+    });
+    names.filter(s => !(s.pn.first && s.pn.last)).sort((a, b) => a.s - b.s).forEach(sp => {
+      const pn = sp.pn;
+      let cands = [];
+      if (pn.last) {
+        cands = people.filter(p => p.last === pn.last || (!p.last && p.words.has(pn.last)));
+        if (pn.initials.length) {
+          const ok = cands.filter(p => p.first && p.first[0] === pn.initials[0]);
+          if (ok.length) cands = ok;
+        }
+      } else if (pn.single) {
+        cands = people.filter(p => p.first === pn.single);
+        if (!cands.length) cands = people.filter(p => p.last === pn.single);
+        if (!cands.length) cands = people.filter(p => p.words.has(pn.single));
+      }
+      if (cands.length) attach(nearest(cands, sp), sp); else attach(newPerson(sp), sp);
+    });
+    return people;
+  }
+
+  /* ============================== PIPELINE ============================== */
+
+  function splitLines(s) { return (s || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean); }
+
+  function process(text, settings) {
+    settings = settings || {};
+    const enabled = settings.enabled || {};
+    const on = id => enabled[id] !== false;
+    const neverList = splitLines(settings.never), alwaysList = splitLines(settings.always);
+    const neverSet = new Set(neverList.map(norm));
+
+    // Zones of text the user said never to redact
+    const neverZones = [];
+    for (const n of neverList) {
+      const re = new RegExp(escRe(n).replace(/\s+/g, '\\s+'), 'gi');
+      let m;
+      while ((m = re.exec(text))) {
+        const s = m.index, e = s + m[0].length;
+        if (!m[0]) { re.lastIndex++; continue; }
+        if ((isAlnum(n[0]) && isAlnum(text[s - 1])) || (isAlnum(n[n.length - 1]) && isAlnum(text[e]))) continue;
+        neverZones.push([s, e]);
+      }
+    }
+    const nameCore = c => c.type === 'NAME' ? c.text.replace(/^(?:\S+\.?\s+)/, w => LEX.titles.has(w.trim().replace(/\.$/, '')) ? '' : w) : c.text;
+    const isNever = c => {
+      if (c.type === 'CUSTOM' || c.method === 'custom') return false;
+      if (neverSet.has(norm(c.text))) return true;
+      if (c.key && neverSet.has(norm(String(c.key)))) return true;
+      return neverZones.some(z => c.s >= z[0] && c.e <= z[1]);
+    };
+
+    const T = tokenize(text);
+    const cands = [];
+    const add = makeAdder(cands, text);
+
+    // "Always redact" list
+    const customPeople = [];
+    const lookLikePerson = entry => {
+      const ws = entry.trim().split(/\s+/);
+      if (ws.length > 4 || /\d|@/.test(entry)) return false;
+      const lows = ws.map(w => w.toLowerCase().replace(/[.,]$/, ''));
+      if (lows.some(w => LEX.place.has(w) || LEX.stop.has(w) || LEX.abbr.has(w.toUpperCase()))) return false;
+      if (ws.length === 1) return isNameWord(lows[0]);
+      return lows.every(w => /^[\p{L}\p{M}'’\-.]+$/u.test(w));
+    };
+    for (const entry of alwaysList) {
+      const re = new RegExp(escRe(entry).replace(/\s+/g, '\\s+'), 'gi');
+      let m;
+      while ((m = re.exec(text))) {
+        const s = m.index, e = s + m[0].length;
+        if (!m[0]) { re.lastIndex++; continue; }
+        if ((isAlnum(entry[0]) && isAlnum(text[s - 1])) || (isAlnum(entry[entry.length - 1]) && isAlnum(text[e]))) continue;
+        if (lookLikePerson(entry)) customPeople.push({ s, e, entry });
+        else add(s, e, 'CUSTOM', { key: norm(entry), entry, method: 'custom' });
+      }
+    }
+
+    const ctx = { isNever, customPeople };
+    detectNHS(text, add);
+    detectPhones(text, add);
+    detectEmails(text, add);
+    detectPostcodes(text, add);
+    detectNINO(text, add);
+    detectLabelledValues(text, add);
+    detectDates(text, add);
+    detectAddresses(text, add, ctx);
+    detectNames(text, T, add, ctx);
+
+    // A date seen anywhere as a date of birth is a date of birth everywhere
+    const dobKeys = new Set(cands.filter(c => c.type === 'DATE' && c.dob).map(c => c.key));
+    cands.forEach(c => { if (c.type === 'DATE' && dobKeys.has(c.key)) { c.type = 'DOB'; c.prio = PRIO.DOB; } });
+
+    // Category switches and the "Never redact" list, then resolve overlaps
+    const resolve = list => {
+      list = list.slice().sort((a, b) => (b.e - b.s) - (a.e - a.s) || b.prio - a.prio || a.s - b.s);
+      const taken = new Uint8Array(text.length + 1), outSpans = [];
+      for (const c of list) {
+        let free = true;
+        for (let k = c.s; k < c.e; k++) if (taken[k]) { free = false; break; }
+        if (!free) continue;
+        taken.fill(1, c.s, c.e);
+        outSpans.push(c);
+      }
+      return outSpans.sort((a, b) => a.s - b.s);
+    };
+    const kept = cands.filter(c => on(c.type) && !isNever(c));
+    let spans = resolve(kept);
+    if (on('NAME')) {
+      const extra = [];
+      propagateNames(text, T, spans.filter(sp => sp.type === 'NAME'), makeAdder(extra, text));
+      spans = resolve(kept.concat(extra.filter(c => !isNever(c))));
+    }
+
+    // Group into entities and number them in order of first appearance
+    const people = clusterPeople(spans);
+    const entities = [];
+    const byKey = new Map();
+    const counters = {};
+    const catOf = id => CONFIG.categories.find(c => c.id === id);
+    for (const sp of spans) {
+      const k = sp.type === 'NAME' ? 'NAME|' + people.indexOf(sp.person) : sp.type + '|' + (sp.key != null ? sp.key : norm(sp.text));
+      let ent = byKey.get(k);
+      if (!ent) {
+        counters[sp.type] = (counters[sp.type] || 0) + 1;
+        ent = { id: entities.length, type: sp.type, n: counters[sp.type], texts: [], count: 0, flags: new Set(), lowConf: true, year: null, entries: new Set() };
+        entities.push(ent); byKey.set(k, ent);
+      }
+      ent.count++;
+      if (ent.texts.indexOf(sp.text) < 0) ent.texts.push(sp.text);
+      if (sp.flag) ent.flags.add(sp.flag);
+      if (!sp.lowConf) ent.lowConf = false;
+      if (sp.year) ent.year = sp.year;
+      if (sp.entry) ent.entries.add(sp.entry);
+      sp.entity = ent;
+    }
+    const keepYear = !!settings.keepYear;
+    for (const ent of entities) {
+      const cat = catOf(ent.type);
+      const fmt = (ent.type === 'DATE' && keepYear && ent.year) ? CONFIG.placeholderFormatWithYear : CONFIG.placeholderFormat;
+      let ph = fmt.replace('{P}', cat.placeholder).replace('{N}', CONFIG.numberPlaceholders ? ent.n : '').replace('{Y}', ent.year || '');
+      ent.placeholder = ph.replace(/\s+([\])])/g, '$1').replace(/\s{2,}/g, ' ');
+      ent.label = cat.label; ent.flags = [...ent.flags];
+      if (ent.lowConf && ent.type === 'NAME') ent.note = 'Found only because it is in the built-in name list – check it is a name.';
+    }
+
+    // Build the output in one pass
+    let out = '', p = 0;
+    for (const sp of spans) { out += text.slice(p, sp.s) + sp.entity.placeholder; p = sp.e; }
+    out += text.slice(p);
+
+    // Summary counts
+    const counts = {};
+    entities.forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
+    const parts = CONFIG.categories.filter(c => counts[c.id]).map(c => counts[c.id] + ' ' + (counts[c.id] === 1 ? c.one : c.many));
+    const flagged = entities.filter(e => e.flags.length).length;
+
+    return { text, output: out, spans, entities, counts, summary: parts.join(', '), flagged,
+      nameCore: sp => nameCore(sp) };
+  }
+
+  return { process, nhsChecksumOK, tokenize, config: CONFIG };
+})();
+
+
+/* =========================================================================
+   SECTION 3 — READING FILES (.txt / .csv / .docx) — no libraries
+   A .docx is a ZIP file; we find its parts and inflate them with the
+   browser's own DecompressionStream('deflate-raw').
+   ========================================================================= */
+const FileReaderLite = (function () {
+  'use strict';
+
+  function decodeText(buf) {
+    let s;
+    try { s = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+    catch (e) { s = new TextDecoder('windows-1252').decode(buf); }
+    return s.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+  }
+
+  async function inflateRaw(bytes) {
+    if (typeof DecompressionStream === 'undefined') throw new Error('NO_DECOMPRESS');
+    let ds;
+    try { ds = new DecompressionStream('deflate-raw'); } catch (e) { throw new Error('NO_DECOMPRESS'); }
+    const stream = new Blob([bytes]).stream().pipeThrough(ds);
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function unzip(buf, wanted) {
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    let eocd = -1;
+    for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 22 - 65535); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('NOT_ZIP');
+    const count = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    const out = {};
+    const utf8 = new TextDecoder('utf-8');
+    for (let n = 0; n < count; n++) {
+      if (p + 46 > buf.byteLength || dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+      const nameLen = dv.getUint16(p + 28, true), extraLen = dv.getUint16(p + 30, true), commLen = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true);
+      const name = utf8.decode(u8.subarray(p + 46, p + 46 + nameLen));
+      p += 46 + nameLen + extraLen + commLen;
+      if (!wanted(name)) continue;
+      const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+      const data = u8.subarray(start, start + csize);
+      let bytes;
+      if (method === 0) bytes = data;
+      else if (method === 8) bytes = await inflateRaw(data);
+      else throw new Error('UNSUPPORTED_ZIP');
+      out[name] = utf8.decode(bytes);
+    }
+    return out;
+  }
+
+  function xmlToText(xml) {
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) return '';
+    const lines = [];
+    const para = p => {
+      let s = '';
+      const walk = n => {
+        for (const c of n.childNodes) {
+          if (c.nodeType !== 1) continue;
+          const ln = c.localName;
+          if (ln === 't') s += c.textContent;
+          else if (ln === 'tab') s += '\t';
+          else if (ln === 'br' || ln === 'cr') s += '\n';
+          else if (ln === 'noBreakHyphen') s += '-';
+          else if (ln === 'p') s += '\n' + para(c);
+          else if (ln === 'delText' || ln === 'instrText' || ln === 'del' || ln === 'Fallback' || ln === 'rPr' || ln === 'pPr') continue;
+          else walk(c);
+        }
+      };
+      walk(p);
+      return s;
+    };
+    const block = (node, acc) => {
+      for (const ch of node.children) {
+        const ln = ch.localName;
+        if (ln === 'p') acc.push(para(ch));
+        else if (ln === 'tbl') {
+          for (const tr of ch.children) {
+            if (tr.localName !== 'tr') continue;
+            const cells = [];
+            for (const tc of tr.children) if (tc.localName === 'tc') { const sub = []; block(tc, sub); cells.push(sub.join(' ').trim()); }
+            acc.push(cells.join('\t'));
+          }
+        } else if (ln !== 'sectPr') block(ch, acc);
+      }
+    };
+    block(doc.documentElement, lines);
+    return lines.join('\n');
+  }
+
+  async function readDocx(buf) {
+    const num = n => +((n.match(/(\d+)\.xml$/) || [0, 0])[1]);
+    const parts = await unzip(buf, n => /^word\/(document|header\d*|footer\d*|footnotes|endnotes)\.xml$/.test(n));
+    if (!parts['word/document.xml']) throw new Error('NOT_DOCX');
+    const names = Object.keys(parts);
+    const order = []
+      .concat(names.filter(n => /header/.test(n)).sort((a, b) => num(a) - num(b)))
+      .concat(['word/document.xml'])
+      .concat(names.filter(n => /footnotes|endnotes/.test(n)))
+      .concat(names.filter(n => /footer/.test(n)).sort((a, b) => num(a) - num(b)));
+    const seen = new Set(), texts = [];
+    for (const n of order) {
+      const t = xmlToText(parts[n]).replace(/\s+$/, '');
+      if (!t.trim() || seen.has(t)) continue;
+      seen.add(t); texts.push(t);
+    }
+    return texts.join('\n\n');
+  }
+
+  /* Returns { text } or { error: 'message for the user' } */
+  async function read(file) {
+    const name = (file.name || '').toLowerCase();
+    const paste = ' Please open it, copy the text and paste it into the box instead.';
+    if (name.endsWith('.pdf') || file.type === 'application/pdf')
+      return { error: 'PDF files can’t be read here.' + paste };
+    if (/\.(doc|odt|rtf|pages|xlsx|xls|pptx)$/.test(name))
+      return { error: 'This type of file can’t be read here.' + paste };
+    try {
+      const buf = await file.arrayBuffer();
+      if (name.endsWith('.docx')) {
+        try { return { text: await readDocx(buf) }; }
+        catch (e) {
+          if (e && e.message === 'NO_DECOMPRESS')
+            return { error: 'This browser can’t unzip Word files (it needs DecompressionStream).' + paste };
+          return { error: 'That Word file couldn’t be read.' + paste };
+        }
+      }
+      if (/\.(txt|csv|tsv|text|md|log)$/.test(name) || /^text\//.test(file.type) || !file.type)
+        return { text: decodeText(buf) };
+      return { error: 'Only .txt, .csv and .docx files can be opened.' + paste };
+    } catch (e) {
+      return { error: 'The file couldn’t be read.' + paste };
+    }
+  }
+
+  return { read, readDocx };
+})();
+
+/* =========================================================================
+   SECTION 4 — EXAMPLE LETTER (entirely fictional)
+   Phone numbers are Ofcom drama numbers; NHS numbers are from the 999
+   test range; postcodes use the non-existent "ZZ" area; the NI number uses
+   the never-issued "QQ" prefix; emails use the reserved example.* domains.
+   ========================================================================= */
+const EXAMPLE_TEXT = `Riverside General Hospital NHS Foundation Trust
+Department of Medicine for Older People
+Switchboard: 0161 496 0000
+
+Dr Anand Mehta
+Riverside Surgery
+22 Mill Lane
+Oakford
+ZZ1 4XY
+
+Clinic date: 28/08/2025
+Typed: 3rd Sept 2025
+Our ref: RGH/MOP/48213
+
+Dear Dr Mehta,
+
+Re: OKAFOR, Grace Adaeze
+D.O.B. 14.03.52        NHS No: 999 246 8130
+Hospital no: RGH0048213
+Address: Flat 3, Willow Court, 17 Beacon Road, Oakford ZZ3 7QT
+Tel: 07700 900123 / (020) 7946 0958
+Email: grace.okafor@example.com
+NI number: QQ 12 34 56 C
+Next of kin: Tomasz Kowalski (son-in-law), mobile +44 7700 900456
+
+Diagnoses
+1. Parkinson's disease (diagnosed May 2019)
+2. COPD
+3. Barrett's oesophagus – surveillance OGD due
+4. Previous Bell's palsy (2016)
+5. Hypertension
+
+I reviewed Mrs Okafor in the Movement Disorders clinic today. She was accompanied by her daughter Sarah and her carer, Mr Ben Parkinson, who visits twice daily. Mrs Okafor was born on 14 March 1952 and has lived alone since her husband Tom died in 2010.
+
+Her tremor has worsened over the summer. She had one fall on 2 August 2025 and attended A&E, where a CT head was normal. BP today was 142/86 lying and 128/80 standing. Weight 61.4 kg. Bloods were taken by J. Whitfield (phlebotomy) and were unremarkable. Her district nurse, Sister Funmi Adebayo, visits weekly, and her social worker is Mx Jordan Ellis (0113 496 0000).
+
+Medication
+Co-careldopa 25/100 mg, 1-2 tablets three times daily
+Amlodipine 5 mg once daily
+Tiotropium inhaler, 2 puffs daily
+
+Sarah tells me her mother's memory has been stable. Grace remains independent with personal care, although Ben helps with meals. Her neighbour, Mrs Olga Petrenko, has a spare key. Mrs Okafor's weight has been stable. The practice pharmacist, Priya SHARMA, has already completed a medication review.
+
+Plan
+1. Increase co-careldopa to 25/100 mg four times daily.
+2. MRI brain requested.
+3. Physiotherapy referral – she will be seen by Callum McDonald in the Community Falls Service.
+4. DNACPR discussed; Mrs Okafor and Sarah Okafor-Hughes wish to think about it before our next appointment on 2025-12-01.
+
+Please note her NHS number was previously recorded as 999 246 8103 on an old referral letter; this appears to be a typo.
+
+Yours sincerely,
+
+Dr Helen O'Connor
+Consultant Geriatrician
+h.oconnor@example.org
+
+cc: Mrs Grace Okafor, 17 Beacon Road, Oakford ZZ3 7QT
+`;
+
+
+/* =========================================================================
+   SECTION 5 — SCREEN (review, lists, buttons). Nothing here is stored,
+   logged or sent anywhere.
+   ========================================================================= */
+(function () {
+  'use strict';
+  const MOBILE = document.documentElement.getAttribute('data-variant') === 'mobile';
+  const $ = id => document.getElementById(id);
+  const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const state = { result: null, undo: null };
+  let listTimer = null, toastTimer = null;
+
+  /* ---------- settings panel ---------- */
+  const cats = $('cats');
+  CONFIG.categories.forEach(c => {
+    const lab = document.createElement('label');
+    lab.innerHTML = '<input type="checkbox" data-cat="' + c.id + '"' + (c.on ? ' checked' : '') + '>' +
+      '<span class="sw t-' + c.id + '"></span><span>' + esc(c.label) + '</span>';
+    cats.appendChild(lab);
+  });
+  $('keepYear').checked = !!CONFIG.keepYearDefault;
+
+  function settings() {
+    const enabled = {};
+    cats.querySelectorAll('input[data-cat]').forEach(i => { enabled[i.getAttribute('data-cat')] = i.checked; });
+    return { enabled, keepYear: $('keepYear').checked, always: $('always').value, never: $('never').value };
+  }
+
+  /* ---------- messages ---------- */
+  function msg(text, kind) { const m = $('msg'); m.textContent = text || ''; m.className = 'msg' + (kind ? ' ' + kind : ''); }
+  function toast(text, undoFn) {
+    const t = $('toast'), u = $('toastUndo');
+    $('toastMsg').textContent = text;
+    u.hidden = !undoFn;
+    u.onclick = () => { t.hidden = true; if (undoFn) undoFn(); };
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, undoFn ? 7000 : 2800);
+  }
+
+  /* ---------- run ---------- */
+  function run(opts) {
+    const text = $('input').value;
+    if (!text.trim()) { msg('Paste some text, choose a file or load the example first.', 'error'); return; }
+    msg('');
+    state.result = DeID.process(text, settings());
+    render(opts && opts.keepScroll);
+    if (!(opts && opts.quiet)) {
+      $('results').hidden = false;
+      if (!(opts && opts.keepScroll)) $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  function rerun() { if (state.result && !$('results').hidden) run({ keepScroll: true, quiet: true }); }
+
+  function render(keepScroll) {
+    const r = state.result;
+    const sO = $('orig').scrollTop, sU = $('out').scrollTop;
+    $('stale').hidden = true;
+    // summary
+    const flagTxt = r.flagged ? ' <span class="flag-note">· ' + r.flagged + ' flagged for checking</span>' : '';
+    $('summary').innerHTML = r.entities.length ? 'Found ' + esc(r.summary) + '.' + flagTxt : 'Nothing was found to redact.';
+    // legend
+    const counts = r.counts;
+    $('legend').innerHTML = CONFIG.categories.filter(c => counts[c.id]).map(c =>
+      '<span class="chip t-' + c.id + '">' + esc(c.label) + ' <b>' + counts[c.id] + '</b></span>').join('');
+    // original + output panes
+    let ho = '', hu = '', p = 0;
+    r.spans.forEach((sp, i) => {
+      const ent = sp.entity, gap = esc(r.text.slice(p, sp.s));
+      const cls = 't-' + ent.type + (ent.flags.length ? ' flag' : '') + (ent.note ? ' low' : '');
+      const tip = esc(ent.placeholder + ' – ' + (MOBILE ? 'tap' : 'click') + ' to un-redact' + (ent.flags.length ? ' (flagged: ' + ent.flags[0] + ')' : ''));
+      ho += gap + '<mark class="' + cls + '" data-i="' + i + '" title="' + tip + '" role="button" tabindex="0">' + esc(sp.text) + '</mark>';
+      hu += gap + '<span class="ph ' + cls + '" data-i="' + i + '" title="' + esc(sp.text) + '" role="button" tabindex="0">' + esc(ent.placeholder) + '</span>';
+      p = sp.e;
+    });
+    const tail = esc(r.text.slice(p));
+    $('orig').innerHTML = ho + tail;
+    $('out').innerHTML = hu + tail;
+    if (keepScroll) { $('orig').scrollTop = sO; $('out').scrollTop = sU; }
+    // list of everything found
+    const rows = r.entities.slice().sort((a, b) => (b.flags.length - a.flags.length) ||
+      CONFIG.categories.findIndex(c => c.id === a.type) - CONFIG.categories.findIndex(c => c.id === b.type) || a.n - b.n);
+    const notes = e => (e.flags.map(f => '<span class="flag-txt">⚠ ' + esc(f) + '</span>').join('<br>') +
+      (e.note ? '<span class="low-txt">' + esc(e.note) + '</span>' : ''));
+    if (MOBILE) {
+      $('found').innerHTML = rows.map(e =>
+        '<div class="fcard"><div class="top"><span class="ph-chip t-' + e.type + '">' + esc(e.placeholder) + '</span>' +
+        '<button type="button" data-ent="' + e.id + '">Un-redact</button></div>' +
+        '<div class="orig">' + e.texts.map(esc).join(' · ') + '</div>' +
+        '<div class="meta">' + esc(e.label) + ' · ' + e.count + (e.count === 1 ? ' time' : ' times') + '</div>' +
+        (notes(e) ? '<div>' + notes(e) + '</div>' : '') + '</div>').join('') || '<p class="help">Nothing found.</p>';
+    } else {
+      $('found').innerHTML = rows.map(e =>
+        '<tr><td><span class="ph-chip t-' + e.type + '">' + esc(e.placeholder) + '</span></td><td>' + esc(e.label) + '</td>' +
+        '<td class="orig">' + e.texts.map(esc).join('<br>') + '</td><td class="num">' + e.count + '</td><td>' + notes(e) + '</td>' +
+        '<td><button type="button" class="link" data-ent="' + e.id + '">Un-redact</button></td></tr>').join('') ||
+        '<tr><td colspan="6">Nothing found.</td></tr>';
+    }
+  }
+
+  /* ---------- Always / Never lists ---------- */
+  const lines = id => $(id).value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const hasLine = (id, v) => lines(id).some(x => x.toLowerCase() === v.toLowerCase());
+  function addLine(id, v) { if (!hasLine(id, v)) { const cur = $(id).value.replace(/\s+$/, ''); $(id).value = (cur ? cur + '\n' : '') + v; } }
+  function removeLine(id, v) { $(id).value = $(id).value.split(/\r?\n/).filter(x => x.trim().toLowerCase() !== v.toLowerCase()).join('\n'); }
+  function snapshot() { const a = $('always').value, n = $('never').value; return () => { $('always').value = a; $('never').value = n; rerun(); }; }
+  const short = s => s.length > 40 ? s.slice(0, 38) + '…' : s;
+
+  function unredactSpan(i) {
+    const sp = state.result.spans[i];
+    if (!sp) return;
+    const undo = snapshot();
+    if (sp.entry) removeLine('always', sp.entry);
+    else { removeLine('always', sp.text); addLine('never', sp.text); }
+    rerun();
+    toast('“' + short(sp.text) + '” will no longer be redacted.', undo);
+  }
+  function unredactEntity(id) {
+    const ent = state.result.entities[id];
+    if (!ent) return;
+    const undo = snapshot();
+    ent.entries.forEach(v => removeLine('always', v));
+    state.result.spans.filter(sp => sp.entity === ent && !sp.entry).forEach(sp => { removeLine('always', sp.text); addLine('never', sp.text); });
+    rerun();
+    toast(ent.placeholder + ' un-redacted everywhere.', undo);
+  }
+  function redactText(t) {
+    t = t.replace(/\s+/g, ' ').trim().replace(/^[,.;:()]+|[,.;:()]+$/g, '').trim();
+    if (t.length < 2) return;
+    if (/\[[A-Z ]+\d*(?: \(\d{4}\))?\]/.test(t)) { toast('Select text that isn’t already a placeholder.'); return; }
+    const undo = snapshot();
+    removeLine('never', t);
+    addLine('always', t);
+    rerun();
+    toast('“' + short(t) + '” will be redacted everywhere.', undo);
+  }
+
+  /* ---------- clicks on highlights ---------- */
+  ['orig', 'out'].forEach(id => {
+    const el = $(id);
+    el.addEventListener('click', e => {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && sel.toString().trim()) return;   // user is selecting, not clicking
+      const m = e.target.closest('[data-i]');
+      if (m) unredactSpan(+m.getAttribute('data-i'));
+    });
+    el.addEventListener('keydown', e => {
+      const m = e.target.closest && e.target.closest('[data-i]');
+      if (m && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); unredactSpan(+m.getAttribute('data-i')); }
+    });
+  });
+  $('found').addEventListener('click', e => { const b = e.target.closest('[data-ent]'); if (b) unredactEntity(+b.getAttribute('data-ent')); });
+
+  /* ---------- selecting text to redact ---------- */
+  let pendingSel = '';
+  function currentSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+    const t = sel.toString();
+    if (!t.trim() || t.length > 300) return null;
+    const range = sel.getRangeAt(0);
+    const inPane = ['orig', 'out'].some(id => $(id).contains(range.commonAncestorContainer));
+    return inPane ? { t, range } : null;
+  }
+  if (MOBILE) {
+    let selTimer = null;
+    document.addEventListener('selectionchange', () => {
+      clearTimeout(selTimer);
+      selTimer = setTimeout(() => {
+        const s = currentSelection();
+        if (!s) { $('selBar').hidden = true; return; }
+        pendingSel = s.t;
+        $('selText').textContent = '“' + short(s.t.replace(/\s+/g, ' ').trim()) + '”';
+        $('selBar').hidden = false;
+      }, 250);
+    });
+    $('selCancel').addEventListener('click', () => { $('selBar').hidden = true; const s = window.getSelection(); if (s) s.removeAllRanges(); });
+    $('selBtn').addEventListener('click', () => { $('selBar').hidden = true; const t = pendingSel; const s = window.getSelection(); if (s) s.removeAllRanges(); redactText(t); });
+  } else {
+    const btn = $('selBtn');
+    const place = () => {
+      const s = currentSelection();
+      if (!s) { btn.hidden = true; return; }
+      pendingSel = s.t;
+      const rect = s.range.getBoundingClientRect();
+      btn.hidden = false;
+      const w = btn.offsetWidth;
+      btn.style.left = Math.max(8, Math.min(window.scrollX + rect.left + rect.width / 2 - w / 2, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
+      btn.style.top = (window.scrollY + rect.bottom + 8) + 'px';
+    };
+    document.addEventListener('mouseup', e => { if (e.target === btn) return; setTimeout(place, 10); });
+    document.addEventListener('keyup', e => { if (e.shiftKey) setTimeout(place, 10); });
+    document.addEventListener('mousedown', e => { if (e.target !== btn) btn.hidden = true; });
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => { btn.hidden = true; const t = pendingSel; const s = window.getSelection(); if (s) s.removeAllRanges(); redactText(t); });
+    // keep the two panes roughly in step when scrolling
+    let syncing = false;
+    const sync = (a, b) => a.addEventListener('scroll', () => {
+      if (syncing) { syncing = false; return; }
+      const max = a.scrollHeight - a.clientHeight;
+      if (max <= 0) return;
+      syncing = true;
+      b.scrollTop = (a.scrollTop / max) * (b.scrollHeight - b.clientHeight);
+    });
+    sync($('orig'), $('out')); sync($('out'), $('orig'));
+  }
+
+  /* ---------- tabs (iPhone) ---------- */
+  if (MOBILE) {
+    const show = which => {
+      const out = which === 'out';
+      $('tabOut').setAttribute('aria-selected', out); $('tabOrig').setAttribute('aria-selected', !out);
+      $('paneOut').hidden = !out; $('paneOrig').hidden = out;
+    };
+    $('tabOut').addEventListener('click', () => show('out'));
+    $('tabOrig').addEventListener('click', () => show('orig'));
+  }
+
+  /* ---------- settings changes ---------- */
+  cats.addEventListener('change', rerun);
+  $('keepYear').addEventListener('change', rerun);
+  ['always', 'never'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(listTimer); listTimer = setTimeout(rerun, 450); }));
+  $('input').addEventListener('input', () => { if (state.result && !$('results').hidden) $('stale').hidden = $('input').value === state.result.text; });
+
+  /* ---------- buttons ---------- */
+  $('btnRun').addEventListener('click', () => run());
+  $('btnExample').addEventListener('click', () => { $('input').value = EXAMPLE_TEXT; run(); });
+  $('btnClear').addEventListener('click', () => {
+    $('input').value = ''; $('always').value = ''; $('never').value = ''; $('file').value = '';
+    state.result = null;
+    $('results').hidden = true; $('orig').innerHTML = ''; $('out').innerHTML = ''; $('found').innerHTML = ''; $('summary').textContent = '';
+    msg('Cleared. Nothing was saved.', 'good');
+    window.scrollTo(0, 0);
+  });
+
+  $('btnCopy').addEventListener('click', async () => {
+    if (!state.result) return;
+    const txt = state.result.output;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(txt); toast('Output copied to the clipboard.'); return; }
+    } catch (e) { /* fall through to the fallback */ }
+    let ok = false;
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0';
+    ta.style.opacity = '0'; ta.style.fontSize = '16px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select(); ta.setSelectionRange(0, txt.length);
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    ta.remove();
+    if (ok) { toast('Output copied to the clipboard.'); return; }
+    $('copyArea').value = txt;
+    $('copyModal').hidden = false;
+    $('copyArea').focus(); $('copyArea').select(); $('copyArea').setSelectionRange(0, txt.length);
+  });
+  $('copyClose').addEventListener('click', () => { $('copyModal').hidden = true; $('copyArea').value = ''; });
+
+  $('btnDownload').addEventListener('click', () => {
+    if (!state.result) return;
+    const blob = new Blob([state.result.output], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = CONFIG.downloadFileName; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast(MOBILE ? 'Saved – look in Downloads in the Files app.' : 'Saved as ' + CONFIG.downloadFileName + '.');
+  });
+
+  /* ---------- files: picker and drag-and-drop ---------- */
+  async function loadFile(file) {
+    if (!file) return;
+    msg('Reading file…');
+    const res = await FileReaderLite.read(file);
+    if (res.error) { msg(res.error, 'error'); return; }
+    if (!res.text.trim()) { msg('No text was found in that file. Please copy and paste the text instead.', 'error'); return; }
+    $('input').value = res.text;
+    state.result = null; $('results').hidden = true;
+    msg('File loaded (' + res.text.length.toLocaleString() + ' characters). ' + (MOBILE ? 'Tap' : 'Click') + ' De-identify.', 'good');
+    $('btnRun').focus();
+  }
+  $('file').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+  $('fileLabel').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'dragend'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('over');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+  // stop a file dropped anywhere else from replacing this page
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+})();
+
+</script>
+</body>
+</html>
